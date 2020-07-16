@@ -17,6 +17,7 @@ import base64
 import client.objectDetector as detector
 # TODO we can avoid using cv2 once we send frame dynamically
 import cv2
+import numpy as np
 
 
 #---------------------------------------------------------
@@ -54,6 +55,7 @@ def testInternet(server="www.google.com"):
 # Function executed when queue message received
 # TODO This function needs to pass off processing to sub routines based on app_id 
 def callback(ch, method, properties, body):
+    logger.debug("Callback function triggered by message")
     try:
         app_id = properties.app_id
         content = properties.content_type
@@ -63,21 +65,22 @@ def callback(ch, method, properties, body):
         logger.warning("Not all expected properties available")
     
     if app_id == 'motion' and content == 'image/jpg':
-        
         imgbin = base64.b64decode(body)
+        """
         with open('captured.jpg', 'wb') as f_output:
             f_output.write(imgbin)
         print("saved file")
-        
+        """"
         # use Machine learning to determine if a person exists in the image
-        # TODO detector currently hard coded to use file from disk. should be able to just pass imgbin
-        frame = cv2.imread('captured.jpg')
+        frame = cv2.imdecode(np.frombuffer(imgbin, np.uint8), -1)
         dt = detector.detectorAPI()
         result = dt.objectCount(frame)
-        print(result)
-
-
-        # then asses the faces in the image to see if we recognize
+        body = json.dumps(result)
+        # respond to the calling device with result
+        channel1 = connection.channel()
+        channel1.queue_declare(reply_to)
+        properties = pika.BasicProperties(app_id='motion', content_type='application/json', reply_to='Central')
+        channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
 
 
 
@@ -129,6 +132,7 @@ if __name__ == '__main__':
         logger.debug('Connected to Message Queue ' + queueSrvr)
     except:
         logger.error('Unable to connect to Message Queue ' + queueSrvr)
+
 
     # If successful start listening on Central channel 
     #------------------------------------------------------
