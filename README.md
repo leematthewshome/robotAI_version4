@@ -4,7 +4,8 @@ This is the latest version of my AI / Automation platform. Designed this time to
 Installation for Client Device
 ------------------------------
 pip3 install imutils
-Pip3 install numpy
+pip3 install numpy
+pip3 install pika
 
 sudo apt update
 sudo apt install libopencv-dev python3-opencv
