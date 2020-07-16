@@ -21,7 +21,8 @@ class motionLoop(object):
     def __init__(self, ENVIRON):
         logging.basicConfig()
         self.logger = logging.getLogger(__name__)
-        self.logger.level = logging.DEBUG
+        #self.logger.level = logging.DEBUG
+        self.logger.level = logging.INFO
         self.ENVIRON = ENVIRON
         credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
         self.parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
@@ -120,7 +121,7 @@ class motionLoop(object):
             self.logger.debug("Motion delay has not expired. %s seconds remaining." % str(self.delay - diff.seconds)  )             
         else:
             lastAlert = curDTime
-            self.logger.debug("Motion detected at %s and motion delay has expired" % curDTime)
+            self.logger.info("Motion detected at %s and motion delay has expired" % curDTime)
             
             # Send a message to the brain over the Message Queue
             if self.ENVIRON["SecureMode"] or self.ENVIRON["Identify"]:
@@ -128,11 +129,17 @@ class motionLoop(object):
                 retval, buffer = cv2.imencode('.jpg', image)
                 jpgb64 = base64.b64encode(buffer)
                 properties = pika.BasicProperties(app_id='motion', content_type='image/jpg', reply_to=self.ENVIRON["clientName"])
+                lastAlert = datetime.datetime.today()
                 try:
-                    connection = pika.BlockingConnection(self.parameters )
+                    before = datetime.datetime.today()
+                    self.logger.info(before)
+                    connection = pika.BlockingConnection(self.parameters)
                     channel = connection.channel()
                     channel.basic_publish(exchange='', routing_key='Central', body=jpgb64, properties=properties)
                     connection.close()
+                    after = datetime.datetime.today()
+                    self.logger.info(after)
+                    self.logger.info(after-before)                   
                 except:
                     self.logger.error('Unable to send image to Message Queue ' + self.ENVIRON["queueSrvr"])
 

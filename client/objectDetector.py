@@ -22,14 +22,11 @@ class detectorAPI:
 
     def objectCount(self, frame):
         #frame = imutils.resize(frame, width=400)
-        print("hello1")
         # grab the frame dimensions and convert it to a blob
         #(h, w) = frame.shape[:2]
         blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 0.007843, (300, 300), 127.5)
         # pass the blob through the network and obtain the detections and predictions
-        print("hello2")
         self.net.setInput(blob)
-        print("hello3")
         detections = self.net.forward()
 
         # loop over the detections
