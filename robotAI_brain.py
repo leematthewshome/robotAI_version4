@@ -11,11 +11,6 @@ import pika
 import time
 import socket
 import logging
-import json
-import base64
-# import other robotAI modules
-import client.objectDetector as detector
-
 
 
 #---------------------------------------------------------
@@ -57,29 +52,17 @@ def callback(ch, method, properties, body):
         app_id = properties.app_id
         content = properties.content_type
         reply_to = properties.reply_to
-        print("Message received from "+reply_to+" App: "+app_id+" content: "+content)
+        logger.debug("Message received from "+reply_to+" App: "+app_id+" content: "+content)
     except:
-        logger.warning("Not all expected properties available")
+        logger.error("Not all expected properties available")
     
-    # TODO Eventually need to dynamically pass 'thinking' to sub routines based on app_id in properties
-    #      For the moment just use multiple IF statements  
+    # Call the relevant logic to process the message depending on sensor type that sent it
     if app_id == 'motion':
-        imgbin = base64.b64decode(body)
-        
-        with open('captured.jpg', 'wb') as f_output:
-            f_output.write(imgbin)
-        print("saved file")
-        
-        # use Machine learning to determine if a person exists in the image
-        dt = detector.detectorAPI()
-        result = dt.objectCount(imgbin)
-        body = json.dumps(result)
-        # respond to the calling device with result
-        channel1 = connection.channel()
-        channel1.queue_declare(reply_to)
-        properties = pika.BasicProperties(app_id='motion', content_type='application/json', reply_to='Central')
-        channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
-
+        import client.brain_motion as motion
+        motion.doLogic(ENVIRON, connection, content, reply_to, body)
+    else:
+        logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
+    
 
 
 #---------------------------------------------------------
