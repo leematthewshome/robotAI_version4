@@ -20,7 +20,8 @@ class detectorAPI:
         self.net = cv2.dnn.readNetFromCaffe(self.proto_path, self.model_path)
 
 
-    def objectCount(self, frame):
+    def objectCount(self, imgbin):
+        frame = cv2.imdecode(np.frombuffer(imgbin, np.uint8), -1)
         #frame = imutils.resize(frame, width=400)
         # grab the frame dimensions and convert it to a blob
         #(h, w) = frame.shape[:2]
