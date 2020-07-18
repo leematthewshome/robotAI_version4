@@ -6,18 +6,16 @@ Does the heavy thinking on behalf of the RobotAI clients.
 Author: Lee Matthews 2020
 ===============================================================================================
 """
-#import essential python modules
+# import essential python modules
 import pika
 import time
 import socket
 import logging
 import json
 import base64
-
+# import other robotAI modules
 import client.objectDetector as detector
-# TODO we can avoid using cv2 once we send frame dynamically
-import cv2
-import numpy as np
+
 
 
 #---------------------------------------------------------
@@ -53,7 +51,6 @@ def testInternet(server="www.google.com"):
 
 
 # Function executed when queue message received
-# TODO This function needs to pass off processing to sub routines based on app_id 
 def callback(ch, method, properties, body):
     logger.debug("Callback function triggered by message")
     try:
@@ -64,17 +61,18 @@ def callback(ch, method, properties, body):
     except:
         logger.warning("Not all expected properties available")
     
-    if app_id == 'motion' and content == 'image/jpg':
+    # TODO Eventually need to dynamically pass 'thinking' to sub routines based on app_id in properties
+    #      For the moment just use multiple IF statements  
+    if app_id == 'motion':
         imgbin = base64.b64decode(body)
-        """
+        
         with open('captured.jpg', 'wb') as f_output:
             f_output.write(imgbin)
         print("saved file")
-        """"
+        
         # use Machine learning to determine if a person exists in the image
-        frame = cv2.imdecode(np.frombuffer(imgbin, np.uint8), -1)
         dt = detector.detectorAPI()
-        result = dt.objectCount(frame)
+        result = dt.objectCount(imgbin)
         body = json.dumps(result)
         # respond to the calling device with result
         channel1 = connection.channel()
