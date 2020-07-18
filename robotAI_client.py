@@ -110,8 +110,8 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------
     if motionSensor:
         try:
-            from client import motionSensor
-            m = Process(target=motionSensor.doSensor, args=(ENVIRON, ))
+            from client import client_motionSensor
+            m = Process(target=client_motionSensor.doSensor, args=(ENVIRON, ))
             m.start()
         except:
             logger.error('Failed to start motion sensor')
