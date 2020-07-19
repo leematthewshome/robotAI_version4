@@ -8,9 +8,11 @@ Author: Lee Matthews 2020
 """
 # import essential python modules
 import pika
-import time
 import socket
 import logging
+
+# import shared utility finctions
+from lib import common_utils as utils
 
 
 #---------------------------------------------------------
@@ -29,22 +31,6 @@ debugOn = True
 # Various functions
 #---------------------------------------------------------
 
-# Function to check if we can access the internet
-def testInternet(server="www.google.com"):
-    logger.debug("Checking network connection to server '%s'...", server)
-    try:
-        # see if we can resolve the host name -- tells us if there is a DNS listening
-        host = socket.gethostbyname(server)
-        # connect to the host -- tells us if the host is actually reachable
-        socket.create_connection((host, 80), 2)
-    except Exception:
-        logger.warning("Internet does not seem to be available")
-        return False
-    else:
-        logger.debug("Internet connection working")
-        return True
-
-
 # Function executed when queue message received
 def callback(ch, method, properties, body):
     logger.debug("Callback function triggered by message")
@@ -56,9 +42,16 @@ def callback(ch, method, properties, body):
     except:
         logger.error("Not all expected properties available")
     
-    # Call the relevant logic to process the message depending on sensor type that sent it
-    if app_id == 'motion':
-        import client.brain_motion as motion
+    # Call the relevant logic to process message, based on sensor type that it relates to
+    if app_id == 'connect':
+        import json
+        body = json.dumps(ENVIRON)        
+        channel1 = connection.channel()
+        channel1.queue_declare(reply_to)
+        properties = pika.BasicProperties(app_id='environ', content_type='application/json', reply_to=reply_to)
+        channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
+    elif app_id == 'motion':
+        import lib.brain_motion as motion
         motion.doLogic(ENVIRON, connection, content, reply_to, body)
     else:
         logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
@@ -89,16 +82,8 @@ if __name__ == '__main__':
     isWWWeb = False		
     isQueue = False
 
-    # try to connect to internet a number of times
-    #-----------------------------------------------------
-    tries = 5
-    while tries > 0 and isWWWeb == False:
-        isWWWeb = testInternet()
-        if isWWWeb == False:
-            tries = tries - 1
-            time.sleep(3)
-    if not isWWWeb:
-        logger.error('Unable to connect to Message Queue ' + queueSrvr)
+    # test internet connection
+    isWWWeb = utils.testInternet(logger, 5, "www.google.com")
 
 
     # Try and connect to the message queue

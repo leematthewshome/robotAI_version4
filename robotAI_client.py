@@ -8,10 +8,12 @@ Author: Lee Matthews 2020
 """
 #import essential python modules
 import pika
-import time
 import logging
-import socket
+import json
 from multiprocessing import Process, Manager, Queue
+
+# import shared utility finctions
+from lib import common_utils as utils
 
 
 #---------------------------------------------------------
@@ -29,25 +31,28 @@ motionSensor = True
 # Various functions
 #---------------------------------------------------------
 
-# Function to check if we can access the internet
-def testInternet(server="www.google.com"):
-    logger.debug("Checking network connection to server '%s'...", server)
-    try:
-        # see if we can resolve the host name -- tells us if there is a DNS listening
-        host = socket.gethostbyname(server)
-        # connect to the host -- tells us if the host is actually reachable
-        socket.create_connection((host, 80), 2)
-    except Exception:
-        logger.warning("Internet does not seem to be available")
-        return False
-    else:
-        logger.debug("Internet connection working")
-        return True
-
 
 # Function executed when queue message received
 def callback(ch, method, properties, body):
-    print(" [x] Received %r" % body)
+    logger.debug("Callback function triggered by message")
+    try:
+        app_id = properties.app_id
+        content = properties.content_type
+        reply_to = properties.reply_to
+        logger.debug("Message received from "+reply_to+" App: "+app_id+" content: "+content)
+    except:
+        logger.error("Not all expected properties available")
+
+    # Call the relevant logic to process message, based on sensor type that it relates to
+    if app_id == 'environ':
+        logger.debug("Loading environment variables sent from brain")
+        data = json.loads(body)
+        for key in data:
+            ENVIRON[key] = data[key]
+    elif app_id == 'motion':
+        print(body)
+    else:
+        logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
 
 
 
@@ -69,27 +74,18 @@ if __name__ == '__main__':
     ENVIRON["queuePort"] = queuePort
     ENVIRON["queueUser"] = queueUser
     ENVIRON["queuePass"] = queuePass
-    ENVIRON["clientName"] = clientName                      #the name assigned to our client device, eg. FrontDoor
-    ENVIRON["motion"] = True                                #flags whether to run motion sensor
-    # these should be sent from central on connect
+    ENVIRON["clientName"] = clientName                              #the name assigned to our client device, eg. FrontDoor
+    ENVIRON["motion"] = True                                        #flags whether to run motion sensor
+    # these defaults will be updated from central on connect
     ENVIRON["SecureMode"] = False
-    ENVIRON["Identify"] = True
-
+    ENVIRON["Identify"] = False
 
     # define some variables
     isWWWeb = False
     isQueue = False
 
-    # try to connect to internet a number of times
-    #-----------------------------------------------------
-    tries = 5
-    while tries > 0 and isWWWeb == False:
-        isWWWeb = testInternet()
-        if isWWWeb == False:
-            tries = tries - 1
-            time.sleep(3)
-    if not isWWWeb:
-        logger.error('Unable to connect to Message Queue ' + queueSrvr)
+    # test internet connection
+    isWWWeb = utils.testInternet(logger, 5, "www.google.com")
 
     # Try and connect to the message queue
     #------------------------------------------------------
@@ -110,7 +106,7 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------
     if motionSensor:
         try:
-            from client import client_motionSensor
+            from lib import client_motionSensor
             m = Process(target=client_motionSensor.doSensor, args=(ENVIRON, ))
             m.start()
         except:
