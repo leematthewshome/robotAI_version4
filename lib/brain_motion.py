@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """
 ===============================================================================================
-Common functions Used By robotai_brian and robotai_client
+Functions used by robotai_brian to process images sent from the client
 Author: Lee Matthews 2020
 ===============================================================================================
 """
