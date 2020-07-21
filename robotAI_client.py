@@ -14,6 +14,7 @@ from multiprocessing import Process, Manager, Queue
 
 # import shared utility finctions
 from lib import common_utils as utils
+from lib import client_voice
 
 
 #---------------------------------------------------------
@@ -50,7 +51,8 @@ def callback(ch, method, properties, body):
         for key in data:
             ENVIRON[key] = data[key]
     elif app_id == 'motion':
-        print(body)
+        import lib.client_motion as motion
+        motion.doLogic(ENVIRON, VOICE, connection, content, reply_to, body)
     else:
         logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
 
@@ -65,6 +67,9 @@ if __name__ == '__main__':
     logging.basicConfig()
     logger = logging.getLogger("robotAI_client")
     logger.level = logging.DEBUG
+
+    # Create reference to our voice class
+    VOICE = client_voice.voice()
 
     # Setup Environment data to be shared with Sensors
     #------------------------------------------------------
