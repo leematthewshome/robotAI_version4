@@ -27,8 +27,8 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
      
     # load body text into dictionary
     try:
-        body_json = json.loads(body)
-    else:
+        body_json = json.loads(body.decode("utf-8"))
+    except:
         logger.error("Response from brain is not a valid JSON structure")
         body_json = {}
 
@@ -38,7 +38,9 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
    
     # Check if a person was detected
     if 'person' in body_json:
-        persons = body_json["person"]
+        persons = body_json['person']
+    else:
+        persons = 0
         
     # If a person was detected then we take relevant action
     if persons > 0:
