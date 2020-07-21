@@ -82,15 +82,6 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
         logger.level = logging.DEBUG
     else:
         logger.level = logging.INFO
-
-    # setup logging using the python logging library
-    #-----------------------------------------------------
-    logging.basicConfig()
-    logger = logging.getLogger("brain_motion")
-    if debugOn:
-        logger.level = logging.DEBUG
-    else:
-        logger.level = logging.INFO
     
     # If we received an image then check it for objects
     if content == "image/jpg":
