@@ -14,7 +14,7 @@ from multiprocessing import Process, Manager, Queue
 
 # import shared utility finctions
 from lib import common_utils as utils
-from lib import client_voice 
+from lib import client_voice
 
 
 #---------------------------------------------------------
@@ -47,7 +47,7 @@ def callback(ch, method, properties, body):
     # Call the relevant logic to process message, based on sensor type that it relates to
     if app_id == 'environ':
         logger.debug("Loading environment variables sent from brain")
-        data = json.loads(body)
+        data = json.loads(body.decode("utf-8"))
         for key in data:
             ENVIRON[key] = data[key]
     elif app_id == 'motion':
@@ -67,8 +67,8 @@ if __name__ == '__main__':
     logging.basicConfig()
     logger = logging.getLogger("robotAI_client")
     logger.level = logging.DEBUG
-    
-    # Create reference to our voice functions
+
+    # Create reference to our voice class
     VOICE = client_voice.voice()
 
     # Setup Environment data to be shared with Sensors
@@ -123,14 +123,13 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------
     if isQueue:
         properties = pika.BasicProperties(app_id='connect', content_type='text', reply_to=clientName)
-        body =  clientName 
+        body = clientName 
         channel.basic_publish(exchange='', routing_key='Central', body=body, properties=properties)
         channel.queue_declare(queue=clientName)
         try:
             logger.debug('Starting to listen on channel ' + clientName)
             channel.basic_consume(queue=clientName, on_message_callback=callback, auto_ack=True)
             channel.start_consuming()
-            logger.debug('Now listening on channel ' + clientName)
         except:
             logger.error('Failed to start listening on channel ' + clientName)
     
