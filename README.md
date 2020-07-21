@@ -16,7 +16,7 @@ sudo apt install libopencv-dev python3-opencv
 
 Installation Specific to Client
 --------------------------------
-
+sudo apt install libttspico0 libttspico-utils libttspico-data -y
 
 
 
