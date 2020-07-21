@@ -14,7 +14,7 @@ from multiprocessing import Process, Manager, Queue
 
 # import shared utility finctions
 from lib import common_utils as utils
-from lib import client_voice
+from lib import client_voice 
 
 
 #---------------------------------------------------------
@@ -67,8 +67,8 @@ if __name__ == '__main__':
     logging.basicConfig()
     logger = logging.getLogger("robotAI_client")
     logger.level = logging.DEBUG
-
-    # Create reference to our voice class
+    
+    # Create reference to our voice functions
     VOICE = client_voice.voice()
 
     # Setup Environment data to be shared with Sensors
