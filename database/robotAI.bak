@@ -16,6 +16,14 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Current Database: `robotAI`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `robotAI` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `robotAI`;
+
+--
 -- Table structure for table `ChatText_en`
 --
 
@@ -26,7 +34,7 @@ CREATE TABLE `ChatText_en` (
   `category` varchar(32) NOT NULL,
   `item` int NOT NULL,
   `text` varchar(255) DEFAULT NULL,
-  `function` varchar(255) DEFAULT NULL,
+  `funct` varchar(255) DEFAULT NULL,
   `next` varchar(255) DEFAULT NULL,
   KEY `ChatText_en_cat` (`category`),
   KEY `ChatText_en_catitem` (`category`,`item`)
@@ -52,4 +60,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-07-26  2:33:23
+-- Dump completed on 2020-07-26 22:59:32
