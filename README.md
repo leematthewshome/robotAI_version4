@@ -22,3 +22,4 @@ sudo apt install libttspico0 libttspico-utils libttspico-data -y
 
 Installation Specific to Server / Brain
 ---------------------------------------
+sudo pip3 install PyMySQL
