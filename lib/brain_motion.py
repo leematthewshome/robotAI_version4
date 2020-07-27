@@ -90,14 +90,16 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
         # TODO Eventually need to save file as unique name and work out a way to clean up history
         with open('captured.jpg', 'wb') as f_output:
             f_output.write(imgbin)
-        print("saved file")
+        print("saved captured.jpg - need to save unique filename eventually")
         
         # use Machine learning to determine if a person exists in the image
-        logger.debug('Analyse the image sent using detectorAPI class')
+        logger.debug('Analysing the image using detectorAPI class')
         dt = detectorAPI(logger, objectModel, objectProto)
         result = dt.objectCount(imgbin)
         # respond to the client device that submitted the message
         body = json.dumps(result)
+        logger.debug('About to send data: ' + body)
+        logger.debug('Sending data to: ' + reply_to)
         channel1 = msgQueue.channel()
         channel1.queue_declare(reply_to)
         properties = pika.BasicProperties(app_id='motion', content_type='application/json', reply_to='Central')

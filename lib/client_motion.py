@@ -7,6 +7,7 @@ Author: Lee Matthews 2020
 """
 import logging
 import json
+import pika
 
 
 #---------------------------------------------------------------------------
@@ -38,14 +39,21 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
    
     # Check if a person was detected
     if 'person' in body_json:
-        persons = body_json['person']
+        persons = body_json["person"]
     else:
         persons = 0
-        
-    # If a person was detected then we take relevant action
+
+    # Take appropriate action based on settings
     if persons > 0:
         if SecureMode:
-            VOICE.say("Who are you and why are you here?")
+            body = '{"action": "getChat", "chatItem": "SECURITY-0"}'
         if Identify:
-            VOICE.say("Hello there.")
+            body = '{"action": "getChat", "chatItem": "GREETA-0"}'
+        # Request chat data from brain
+        logger.debug("About to send this data: " +body)
+        logger.debug("Sending to : " +reply_to)
+        channel1 = QCONN.channel()
+        channel1.queue_declare(reply_to)
+        properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["clientName"])
+        channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
         
