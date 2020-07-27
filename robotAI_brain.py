@@ -48,7 +48,7 @@ def callback(ch, method, properties, body):
         body = json.dumps(ENVIRON)        
         channel1 = connection.channel()
         channel1.queue_declare(reply_to)
-        properties = pika.BasicProperties(app_id='environ', content_type='application/json', reply_to=reply_to)
+        properties = pika.BasicProperties(app_id='environ', content_type='application/json', reply_to=clientName)
         channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
     elif app_id == 'motion':
         import lib.brain_motion as motion

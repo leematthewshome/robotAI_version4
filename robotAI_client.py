@@ -44,6 +44,10 @@ def callback(ch, method, properties, body):
     except:
         logger.error("Not all expected properties available")
 
+    # ensure json is readable (seems to come thru as bytes)
+    #if content == "application/json":
+    #    body = json.loads(body.decode("utf-8"))
+    
     # Call the relevant logic to process message, based on sensor type that it relates to
     if app_id == 'environ':
         logger.debug("Loading environment variables sent from brain")
@@ -53,6 +57,9 @@ def callback(ch, method, properties, body):
     elif app_id == 'motion':
         import lib.client_motion as motion
         motion.doLogic(ENVIRON, VOICE, connection, content, reply_to, body)
+    elif app_id == 'voice':
+        print("About to call doLogic function...")
+        VOICE.doLogic(content, body)
     else:
         logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
 
