@@ -1,8 +1,8 @@
 #!/usr/bin/python
 """
 ===============================================================================================
-This module is used for turning speech into text (STT)
-Author: Lee Matthews 2018
+This module is used for various voice operations
+Author: Lee Matthews 2018 - updated 2020
 ===============================================================================================
 """
 
@@ -14,17 +14,34 @@ import json
 import re
 import time
 import datetime
+import pika
+
+# import from different points to allow for direct test
+try:
+    import lib.client_stt as client_stt
+except:
+    import client_stt
 
 
+
+#---------------------------------------------------------------------------------------------
 # Voice class. Handles text to speech (tts) and speech to text (stt)
 #---------------------------------------------------------------------------------------------
 class voice():
 
-    def __init__(self, language="en-US"):
-        self.language = language
+    def __init__(self, ENVIRON, language="en-US"):
+        debugOn = True
         logging.basicConfig()
         self.logger = logging.getLogger("voice")
-        self.logger.setLevel(logging.DEBUG)
+        if debugOn:
+            self.logger.level = logging.DEBUG
+        else:
+            self.logger.level = logging.INFO
+
+        self.ENVIRON = ENVIRON
+        self.language = language
+        self.stt = client_stt.stt()
+
 
     # Text to speech using Pico2Wave - the most human sounding voice
     #---------------------------------------------------------------
@@ -72,7 +89,6 @@ class voice():
             for row in chatList:
                 resp = self.doChatItem(row['text'], row['funct'])
                 # if we need to select a path then loop through all options and search for response
-                """
                 nText = row['next']
                 if '|' in nText:
                     options = nText.split("|")
@@ -80,9 +96,18 @@ class voice():
                         row = item.split("-")
                         rtxt = row[0]
                         if rtxt.upper() in resp:
-                            self.doChat(item)
-               """
-
+                            # Request chat data from brain
+                            body = '{"action": "getChat", "chatItem": "' + item + '"}'
+                            self.logger.debug("About to send this data: " +body)
+                            credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
+                            parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
+                            connection = pika.BlockingConnection(parameters)
+                            channel1 = connection.channel()
+                            channel1.queue_declare("Central")
+                            props = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=self.ENVIRON["clientName"])
+                            channel1.basic_publish(exchange='', routing_key='Central', body=body, properties=props)
+                            connection.close()
+       
 
     # handle (eg. say) a single chat item
     # ------------------------------------------------------
@@ -102,9 +127,9 @@ class voice():
         if funct:
             funct = funct.strip()
             if funct == "yesNo":
-                resp = self.say("Need yes no function")
+                resp = self.getYesNo(text)
             elif funct == "pauseListen":
-                resp = self.say("Need pause listen function")
+                resp = self.stt.listen(stt=False)
             else:
                 self.logger.debug("No handler for function %s" % funct)
                 self.say('Sorry, I dont know what to do about %s' % funct)
@@ -127,6 +152,44 @@ class voice():
             text = text.replace('dayPart', dayPart)
         return text
 
+
+    # Check for a Yes or No. Allows for one loop if no answer. 
+    # TODO use NLP later on to determine positive or negative response
+    #---------------------------------------------------------------
+    def getYesNo(self, questn):
+        self.logger.debug("Running stt.getYesNo function")
+        # function to see if the response contained yes
+        def getResponse(texts):
+            str = ""
+            for text in texts:
+                str += text
+            return str
+
+        # Listen for a response from the speaker
+        texts = self.stt.listen(stt=True)
+        # if no response was received we get an error so use try block
+        try:
+            resp = getResponse(texts)
+        except:
+            resp = "WHATEVER"
+        # first check for yes or no
+        if bool(re.search(r'\byes\b', resp, re.IGNORECASE)) == True:
+            return "YES"
+        elif bool(re.search(r'\bno\b', resp, re.IGNORECASE)) == True:
+            return "NO"
+        else:
+            self.say("Sorry, I did not hear a yes or no. " + questn)
+            texts = self.stt.listen(stt=True)
+            try:
+                resp = getResponse(texts)
+            except:
+                resp = "WHATEVER"
+        # second check for yes or no
+        if bool(re.search(r'\byes\b', resp, re.IGNORECASE)) == True:
+            return "YES"
+        else:
+            return "NO"
+    
                             
     # General function to work out what to do from 'action' 
     # ------------------------------------------------------
@@ -142,12 +205,12 @@ class voice():
         else:
             self.logger.debug("No logic created yet to handle content = " + content)
         
-
+    
 
 
 # Testing script
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    tts = voice()
-    tts.say("THE RAIN IN SPAIN FALLS MAINLY ON THE PLAIN. BUT THE OLIVES ARE DELICIOUS WITH A GLASS OF RED.")
+    voice = voice()
+    voice.say("THE RAIN IN SPAIN FALLS MAINLY ON THE PLAIN. BUT THE OLIVES ARE DELICIOUS WITH A GLASS OF RED.")
