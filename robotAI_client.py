@@ -34,6 +34,7 @@ motionSensor = True
 
 
 # Function executed when queue message received
+#---------------------------------------------------------
 def callback(ch, method, properties, body):
     logger.debug("Callback function triggered by message")
     try:
@@ -44,21 +45,19 @@ def callback(ch, method, properties, body):
     except:
         logger.error("Not all expected properties available")
 
-    # ensure json is readable (seems to come thru as bytes)
-    #if content == "application/json":
-    #    body = json.loads(body.decode("utf-8"))
-    
     # Call the relevant logic to process message, based on sensor type that it relates to
     if app_id == 'environ':
+        # update the current environment variables 
         logger.debug("Loading environment variables sent from brain")
         data = json.loads(body.decode("utf-8"))
         for key in data:
             ENVIRON[key] = data[key]
     elif app_id == 'motion':
+        # call our set of actions related to motion
         import lib.client_motion as motion
         motion.doLogic(ENVIRON, VOICE, connection, content, reply_to, body)
     elif app_id == 'voice':
-        print("About to call doLogic function...")
+        # call the set of actions related to voice
         VOICE.doLogic(content, body)
     else:
         logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
@@ -75,9 +74,6 @@ if __name__ == '__main__':
     logger = logging.getLogger("robotAI_client")
     logger.level = logging.DEBUG
 
-    # Create reference to our voice class
-    VOICE = client_voice.voice()
-
     # Setup Environment data to be shared with Sensors
     #------------------------------------------------------
     mgr = Manager()
@@ -91,6 +87,9 @@ if __name__ == '__main__':
     # these defaults will be updated from central on connect
     ENVIRON["SecureMode"] = False
     ENVIRON["Identify"] = False
+
+    # Create reference to our voice class
+    VOICE = client_voice.voice(ENVIRON)
 
     # define some variables
     isWWWeb = False
