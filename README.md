@@ -18,6 +18,7 @@ Installation Specific to Client
 --------------------------------
 sudo apt install libttspico0 libttspico-utils libttspico-data -y
 
+sudo apt-get install python3-pyaudio sox portaudio19-dev
 
 
 Installation Specific to Server / Brain
