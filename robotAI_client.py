@@ -10,6 +10,7 @@ Author: Lee Matthews 2020
 import pika
 import logging
 import json
+import os
 from multiprocessing import Process, Manager, Queue
 
 # import shared utility finctions
@@ -82,8 +83,9 @@ if __name__ == '__main__':
     ENVIRON["queuePort"] = queuePort
     ENVIRON["queueUser"] = queueUser
     ENVIRON["queuePass"] = queuePass
-    ENVIRON["clientName"] = clientName                              #the name assigned to our client device, eg. FrontDoor
-    ENVIRON["motion"] = True                                        #flags whether to run motion sensor
+    ENVIRON["clientName"] = clientName                                  #the name assigned to our client device, eg. FrontDoor
+    ENVIRON["motion"] = True                                            #flags whether to run motion sensor
+    ENVIRON["topdir"] = os.path.dirname(os.path.realpath(__file__))
     # these defaults will be updated from central on connect
     ENVIRON["SecureMode"] = False
     ENVIRON["Identify"] = False
