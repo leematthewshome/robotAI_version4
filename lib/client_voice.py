@@ -31,6 +31,7 @@ class voice():
 
     def __init__(self, ENVIRON, language="en-US"):
         debugOn = True
+        
         logging.basicConfig()
         self.logger = logging.getLogger("voice")
         if debugOn:
@@ -40,7 +41,10 @@ class voice():
 
         self.ENVIRON = ENVIRON
         self.language = language
-        self.stt = client_stt.stt()
+        self.stt = client_stt.stt(ENVIRON)
+        topdir = ENVIRON["topdir"]
+        self.beep_hi = os.path.join(topdir, "static/audio/beep_hi.wav")
+        self.beep_lo = os.path.join(topdir, "static/audio/beep_lo.wav")
 
 
     # Text to speech using Pico2Wave - the most human sounding voice
@@ -129,11 +133,19 @@ class voice():
             if funct == "yesNo":
                 resp = self.getYesNo(text)
             elif funct == "pauseListen":
-                resp = self.stt.listen(stt=False)
+                resp = self.listen(stt=False)
             else:
                 self.logger.debug("No handler for function %s" % funct)
                 self.say('Sorry, I dont know what to do about %s' % funct)
         return resp
+
+
+    # update the chat text with any context sensitive values
+    # ------------------------------------------------------
+    def listen(self, stt):
+        self.play(self.beep_hi)    
+        resp = self.stt.listen(stt)
+        self.play(self.beep_lo)    
 
 
     # update the chat text with any context sensitive values
@@ -150,6 +162,11 @@ class voice():
             else:
                 dayPart = "Evening"
             text = text.replace('dayPart', dayPart)
+            
+        # fix mention of years
+        year_regex = re.compile(r'(\b)(\d\d)([1-9]\d)(\b)')
+        text = year_regex.sub('\g<1>\g<2> \g<3>\g<4>', text) 
+        
         return text
 
 
@@ -166,7 +183,7 @@ class voice():
             return str
 
         # Listen for a response from the speaker
-        texts = self.stt.listen(stt=True)
+        texts = self.listen(stt=True)
         # if no response was received we get an error so use try block
         try:
             resp = getResponse(texts)
@@ -179,7 +196,7 @@ class voice():
             return "NO"
         else:
             self.say("Sorry, I did not hear a yes or no. " + questn)
-            texts = self.stt.listen(stt=True)
+            texts = self.listen(stt=True)
             try:
                 resp = getResponse(texts)
             except:
