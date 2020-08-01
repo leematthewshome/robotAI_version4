@@ -20,15 +20,7 @@ sudo apt install libttspico0 libttspico-utils libttspico-data -y
 
 sudo apt-get install python3-pyaudio sox portaudio19-dev
 
-sudo pip3 install --upgrade httplib2
-
-sudo pip3 install google-cloud-speech==0.25.1
-
-sudo pip3 install --upgrade argparse
-
-sudo pip3 install --upgrade gcloud
-
-sudo pip3 install --upgrade google-api-python-client
+sudo pip3 install --upgrade google-cloud-speech
 
 
 Installation Specific to Server / Brain
