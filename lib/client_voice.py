@@ -64,8 +64,8 @@ class voice():
             subprocess.call(cmd, stdout=f, stderr=f)
             f.seek(0)
             output = f.read()
-            if output:
-                self.logger.debug("Result of cmd was: " + str(output))
+            #if output:
+            #    self.logger.debug("Result of cmd was: " + str(output))
         self.play(fname)
         os.remove(fname)
 
@@ -132,6 +132,7 @@ class voice():
             funct = funct.strip()
             if funct == "yesNo":
                 resp = self.getYesNo(text)
+                self.logger.debug("Received %s from getYesNo() function" % funct)
             elif funct == "pauseListen":
                 resp = self.listen(stt=False)
             else:
@@ -140,12 +141,13 @@ class voice():
         return resp
 
 
-    # update the chat text with any context sensitive values
+    # call listen function with beep indicators
     # ------------------------------------------------------
     def listen(self, stt):
         self.play(self.beep_hi)    
         resp = self.stt.listen(stt)
         self.play(self.beep_lo)    
+        return resp
 
 
     # update the chat text with any context sensitive values
@@ -175,34 +177,18 @@ class voice():
     #---------------------------------------------------------------
     def getYesNo(self, questn):
         self.logger.debug("Running stt.getYesNo function")
-        # function to see if the response contained yes
-        def getResponse(texts):
-            str = ""
-            for text in texts:
-                str += text
-            return str
-
         # Listen for a response from the speaker
-        texts = self.listen(stt=True)
-        # if no response was received we get an error so use try block
-        try:
-            resp = getResponse(texts)
-        except:
-            resp = "WHATEVER"
+        resp = self.listen(stt=True)
         # first check for yes or no
-        if bool(re.search(r'\byes\b', resp, re.IGNORECASE)) == True:
+        if bool(re.search(r'\bYES\b', resp, re.IGNORECASE)) == True:
             return "YES"
-        elif bool(re.search(r'\bno\b', resp, re.IGNORECASE)) == True:
+        elif bool(re.search(r'\bNO\b', resp, re.IGNORECASE)) == True:
             return "NO"
         else:
             self.say("Sorry, I did not hear a yes or no. " + questn)
-            texts = self.listen(stt=True)
-            try:
-                resp = getResponse(texts)
-            except:
-                resp = "WHATEVER"
+            resp = self.listen(stt=True)
         # second check for yes or no
-        if bool(re.search(r'\byes\b', resp, re.IGNORECASE)) == True:
+        if bool(re.search(r'\bYES\b', resp, re.IGNORECASE)) == True:
             return "YES"
         else:
             return "NO"
@@ -231,3 +217,5 @@ if __name__ == '__main__':
 
     voice = voice()
     voice.say("THE RAIN IN SPAIN FALLS MAINLY ON THE PLAIN. BUT THE OLIVES ARE DELICIOUS WITH A GLASS OF RED.")
+    
+    

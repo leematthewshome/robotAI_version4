@@ -16,7 +16,9 @@ import pyaudio
 import os
 
 import base64
+import json
 from google.cloud import speech_v1 as speech
+from google.protobuf.json_format import MessageToJson
 
 
 # Insert the correct values from your Google project
@@ -114,7 +116,8 @@ class stt():
     # Submit recording to Google API to convert to text 
     #---------------------------------------------------------------
     def transcribe(self, fp):
-        transcribed = []
+        #transcribed = []
+        transcribed = ''
 
         data = fp.read()
         speech_content_bytes = base64.b64encode(data)
@@ -127,18 +130,30 @@ class stt():
         audio = {'content': data}
 
         client = speech.SpeechClient()
-        result = client.recognize(config, audio)
-        print (result)
+        response = client.recognize(config, audio)
+        result_json = MessageToJson(response)
+        result_json = json.loads(result_json)
+
+        for result in result_json["results"]:
+            #transcribed.append(result["alternatives"][0]["transcript"].upper())
+            transcribed += result["alternatives"][0]["transcript"].upper() + ' '
+
+        self.logger.debug("Transcribed: " + transcribed)
+        return transcribed
+        
 
 
-# Testing script
+
+# Testing script that is executed if code run directly
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     ENVIRON = {}
+    ENVIRON["avg_noise"] = 1
     ENVIRON["topdir"] = '/home/lee/Downloads/robotAI4'
 
     mystt = stt(ENVIRON)
     result = mystt.listen(True)
+    print(result)
 
 
 
