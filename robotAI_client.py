@@ -29,6 +29,7 @@ queuePass = 'guest'
 debugOn = True
 motionSensor = True
 
+
 #---------------------------------------------------------
 # Various functions
 #---------------------------------------------------------
@@ -71,9 +72,13 @@ def callback(ch, method, properties, body):
 if __name__ == '__main__':
 
     # setup logging using the python logging library
+    debugOn = False
     logging.basicConfig()
     logger = logging.getLogger("robotAI_client")
-    logger.level = logging.DEBUG
+    if debugOn:
+        logger.level = logging.DEBUG
+    else:
+        logger.level = logging.INFO
 
     # Setup Environment data to be shared with Sensors
     #------------------------------------------------------
