@@ -22,6 +22,8 @@ sudo apt-get install python3-pyaudio sox portaudio19-dev
 
 sudo pip3 install --upgrade google-cloud-speech
 
+sudo pip3 install --upgrade protobuf
+
 
 Installation Specific to Server / Brain
 ---------------------------------------
