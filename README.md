@@ -24,9 +24,9 @@ sudo pip3 install --upgrade google-cloud-speech
 
 sudo pip3 install --upgrade protobuf
 
-test recording of voice with arecord using the following command arecord -d 5 -f S16_LE test.wav
+test recording of voice with arecord using the following command: arecord -d 5 -f S16_LE test.wav
 
-test playing back the resulting recording with aplay test.wav
+test playing back the resulting recording with: aplay test.wav
 
 
 Installation Specific to Server / Brain
