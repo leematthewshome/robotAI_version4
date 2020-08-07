@@ -34,9 +34,7 @@ install swig 3.0.10 or above (refer Snowboy Github site)
 
 sudo apt-get install libatlas-base-dev
 
-Download Snowboy project from Github, unzip, change directory to snowboy-master/swig/Python3 and run "make" to compile _snowboydetect.so  Copy that file to lib/snowbow
-
-Copy that file to lib/snowboy folder where RobotAI code is located
+Download Snowboy project from Github, unzip, change directory to snowboy-master/swig/Python3 and run "make" to compile _snowboydetect.so  Copy that file to lib/snowboy folder where RobotAI code is located
 
 
 Installation Specific to Server / Brain
