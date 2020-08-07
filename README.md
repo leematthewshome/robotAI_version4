@@ -28,6 +28,16 @@ test recording of voice with arecord using the following command: arecord -d 5 -
 
 test playing back the resulting recording with: aplay test.wav
 
+sudo apt-get install sox
+
+install swig 3.0.10 or above (refer Snowboy Github site)
+
+sudo apt-get install libatlas-base-dev
+
+Download Snowboy project from Github, unzip, change directory to snowboy-master/swig/Python3 and run "make" to compile _snowboydetect.so  Copy that file to lib/snowbow
+
+Copy that file to lib/snowboy folder where RobotAI code is located
+
 
 Installation Specific to Server / Brain
 ---------------------------------------
