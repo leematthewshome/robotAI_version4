@@ -28,6 +28,7 @@ queueUser = 'guest'
 queuePass = 'guest'
 debugOn = True
 motionSensor = True
+voiceSensor = True
 
 
 #---------------------------------------------------------
@@ -89,7 +90,8 @@ if __name__ == '__main__':
     ENVIRON["queueUser"] = queueUser
     ENVIRON["queuePass"] = queuePass
     ENVIRON["clientName"] = clientName                                  #the name assigned to our client device, eg. FrontDoor
-    ENVIRON["motion"] = True                                            #flags whether to run motion sensor
+    ENVIRON["motion"] = motionSensor                                    #flags whether to run motion sensor
+    ENVIRON["listen"] = True                                            # indicates pyaudio is free for hotword detection
     ENVIRON["topdir"] = os.path.dirname(os.path.realpath(__file__))
     # these defaults will be updated from central on connect
     ENVIRON["SecureMode"] = False
@@ -123,12 +125,28 @@ if __name__ == '__main__':
     # kick off motion sensor process based on enabled = TRUE
     # ---------------------------------------------------------------------------------------
     if motionSensor:
+        logger.info("Starting motion sensor")
         try:
             from lib import client_motionSensor
             m = Process(target=client_motionSensor.doSensor, args=(ENVIRON, ))
             m.start()
         except:
             logger.error('Failed to start motion sensor')
+    
+
+
+    # ---------------------------------------------------------------------------------------
+    # kick off voice sensor process based on enabled = TRUE
+    # ---------------------------------------------------------------------------------------
+    if voiceSensor:
+        logger.info("Starting voice sensor")
+        try:
+            from lib import client_voiceSensor
+            m = Process(target=client_voiceSensor.doSensor, args=(ENVIRON, VOICE,))
+            m.start()
+        except:
+            logger.error('Failed to start voice sensor')
+    
     
 
     # ---------------------------------------------------------------------------------------
