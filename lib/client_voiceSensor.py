@@ -56,7 +56,7 @@ class listenLoop(object):
 
     # Snowboy interrupt callback function
     def interrupt_callback(self):
-        if ENVIRON["listen"] == False:
+        if self.ENVIRON["listen"] == False:
             self.interrupted = True
         return self.interrupted
 
@@ -66,17 +66,17 @@ class listenLoop(object):
         # AutoLevel - display the current average noise level
         self.logger.debug("Current avg_noise is %s" % self.ENVIRON["avg_noise"] )
 
-        if ENVIRON["listen"] == False:
+        if self.ENVIRON["listen"] == False:
             self.logger.debug("KEYWORD DETECTED. But we are busy so ignore it")
         else:
             # set system to indicate things are busy
-            ENVIRON["listen"] = False
+            self.ENVIRON["listen"] = False
             self.logger.debug("KEYWORD DETECTED. Beginning active listen ")
             input = self.VOICE.listen(stt=True)
             # need to submit recorded to to our intent engine. Just print for now.
             print(input)
             # set listen back to true - rely on client_voice to set to false when busy
-            ENVIRON["listen"] = True
+            self.ENVIRON["listen"] = True
             
         #go back to passive listening once ENVIRON["listen"] indicates it is OK
         self.waitUntilListen()
