@@ -55,8 +55,8 @@ class stt():
     # Placeholder for function to listen for speech. 
     # TODO create proper function to record and send to stt
     #---------------------------------------------------------------
-    def listen(self, stt=True):
-        self.logger.debug("Running stt.listen function with STT = " + str(stt))
+    def listen(self, myFile):
+        self.logger.debug("Running stt.listen function ")
         
         _audio = pyaudio.PyAudio()
         RATE = 16000
@@ -64,7 +64,11 @@ class stt():
         LISTEN_TIME = 10
 
         # Set threshold to the current average background noise
-        THRESHOLD = self.ENVIRON["avg_noise"] 
+        # TODO if voiceSensor not running we need another way to calc THRESHOLD
+        try:
+            THRESHOLD = self.ENVIRON["avg_noise"] 
+        except:
+            THRESHOLD = 100
 
         # prepare recording stream
         self.logger.debug("Opening pyaudio recording stream")
@@ -96,16 +100,17 @@ class stt():
         stream.close()
         self.logger.debug("Closed pyaudio recording stream")
 
-        # Save the recording to the file handle if we were given one
-        if stt:
-            wav_fp = wave.open(stt, 'wb')
+        # Save the recording to the file handle only if we were given one
+        if myFile:
+            wav_fp = wave.open(myFile, 'wb')
             wav_fp.setnchannels(1)
             wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
             wav_fp.setframerate(RATE)
             wav_fp.writeframes(b''.join(frames))
             wav_fp.close()
+        self.logger.debug("Returning file to client_voice.listen function")
 
-        return stt      
+        return myFile      
         
 
 
