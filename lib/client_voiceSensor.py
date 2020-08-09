@@ -29,7 +29,7 @@ class listenLoop(object):
     def __init__(self, ENVIRON, VOICE):
         debug = True
         self.hotword = 'computer.umdl'
-        self.sensitivty = .7
+        self.sensitivty = .6
         
         self.ENVIRON = ENVIRON
         self.TOPDIR = ENVIRON["topdir"]

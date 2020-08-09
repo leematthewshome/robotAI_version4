@@ -45,15 +45,18 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
 
     # Take appropriate action based on settings
     if persons > 0:
-        if SecureMode:
-            body = '{"action": "getChat", "chatItem": "SECURITY-0"}'
-        if Identify:
-            body = '{"action": "getChat", "chatItem": "GREETA-0"}'
-        # Request chat data from brain
-        logger.debug("About to send this data: " +body)
-        logger.debug("Sending to : " +reply_to)
-        channel1 = QCONN.channel()
-        channel1.queue_declare(reply_to)
-        properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["clientName"])
-        channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
-        
+        if ENVIRON["talking"]:
+            logger.debug("We are already talking on this device, so ignoring motion for now")
+        else:
+            if SecureMode:
+                body = '{"action": "getChat", "chatItem": "SECURITY-0"}'
+            if Identify:
+                body = '{"action": "getChat", "chatItem": "GREETA-0"}'
+            # Request chat data from brain
+            logger.debug("About to send this data: " +body)
+            logger.debug("Sending to : " +reply_to)
+            channel1 = QCONN.channel()
+            channel1.queue_declare(reply_to)
+            properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["clientName"])
+            channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
+
