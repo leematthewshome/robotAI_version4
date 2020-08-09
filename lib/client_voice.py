@@ -15,6 +15,7 @@ import re
 import time
 import datetime
 import pika
+import tempfile 
 
 # import from different points to allow for direct test
 try:
@@ -30,7 +31,7 @@ except:
 class voice():
 
     def __init__(self, ENVIRON, language="en-US"):
-        debugOn = True
+        debugOn = False
         
         logging.basicConfig()
         self.logger = logging.getLogger("voice")
@@ -144,10 +145,18 @@ class voice():
     # call listen function with beep indicators
     # ------------------------------------------------------
     def listen(self, stt):
+        # only send a file handle if we need the text transcribed 
+        if stt:
+            stt = tempfile.SpooledTemporaryFile(mode='w+b')
+        else:
+            stt = None
+            
         self.play(self.beep_hi)    
-        resp = self.stt.listen(stt)
+        rec = self.stt.listen(stt)
+        rec.seek(0)
         self.play(self.beep_lo)    
-        return resp
+        response = self.stt.transcribe(stt)
+        return response
 
 
     # update the chat text with any context sensitive values
@@ -202,9 +211,11 @@ class voice():
             action = data["action"]
             if action == 'chat':
                 self.ENVIRON["talking"] = True
+                self.logger.info("I have now set self.ENVIRON['talking'] = " + str(self.ENVIRON["talking"]))
                 chatList = data["list"]
                 self.doChat(chatList)
                 self.ENVIRON["talking"] = False
+                self.logger.info("I have now set self.ENVIRON['talking'] = " + str(self.ENVIRON["talking"]))
             else:
                 self.logger.debug("No logic created yet to handle action = " + action)
         else:

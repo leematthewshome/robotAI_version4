@@ -24,9 +24,9 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
         logger.level = logging.DEBUG
     else:
         logger.level = logging.INFO
-
      
     # load body text into dictionary
+    logger.debug("Converting body to utf-8 text andf json object")
     try:
         body_json = json.loads(body.decode("utf-8"))
     except:
@@ -59,4 +59,6 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
             channel1.queue_declare(reply_to)
             properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["clientName"])
             channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
+    else:
+         logger.debug("0 person detected in image, so taking no action")
 

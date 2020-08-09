@@ -101,7 +101,7 @@ class motionLoop(object):
             if frames > self.framesCheck:
                 self.logger.debug("Checking to see if we should stop detecting motion")
                 frames = 0
-                if not self.ENVIRON["motion"]:
+                if self.ENVIRON["motion"] == False:
                     self.logger.debug("Time to stop detecting motion")
                     # cleanup the camera quit function
                     camera.release()

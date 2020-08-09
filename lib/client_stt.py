@@ -64,9 +64,7 @@ class stt():
         LISTEN_TIME = 10
 
         # Set threshold to the current average background noise
-        # TODO When have listen sensor working we need to uncomment this and remove the fixed setting
-        #THRESHOLD = self.ENVIRON["avg_noise"] 
-        THRESHOLD = 1
+        THRESHOLD = self.ENVIRON["avg_noise"] 
 
         # prepare recording stream
         self.logger.debug("Opening pyaudio recording stream")
@@ -98,18 +96,16 @@ class stt():
         stream.close()
         self.logger.debug("Closed pyaudio recording stream")
 
-        # Only convert our recording to text with STT engine if we need to
+        # Save the recording to the file handle if we were given one
         if stt:
-            with tempfile.SpooledTemporaryFile(mode='w+b') as f:
-                wav_fp = wave.open(f, 'wb')
-                wav_fp.setnchannels(1)
-                wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
-                wav_fp.setframerate(RATE)
-                wav_fp.writeframes(b''.join(frames))
-                wav_fp.close()
-                f.seek(0)
-                self.logger.debug("Calling transcribe function now...")
-                return self.transcribe(f)         
+            wav_fp = wave.open(stt, 'wb')
+            wav_fp.setnchannels(1)
+            wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
+            wav_fp.setframerate(RATE)
+            wav_fp.writeframes(b''.join(frames))
+            wav_fp.close()
+
+        return stt      
         
 
 
