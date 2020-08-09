@@ -31,7 +31,7 @@ except:
 class voice():
 
     def __init__(self, ENVIRON, language="en-US"):
-        debugOn = False
+        debugOn = True
         
         logging.basicConfig()
         self.logger = logging.getLogger("voice")
@@ -43,6 +43,7 @@ class voice():
         self.ENVIRON = ENVIRON
         self.language = language
         self.stt = client_stt.stt(ENVIRON)
+        
         topdir = ENVIRON["topdir"]
         self.beep_hi = os.path.join(topdir, "static/audio/beep_hi.wav")
         self.beep_lo = os.path.join(topdir, "static/audio/beep_lo.wav")
@@ -145,18 +146,20 @@ class voice():
     # call listen function with beep indicators
     # ------------------------------------------------------
     def listen(self, stt):
-        # only send a file handle if we need the text transcribed 
-        if stt:
-            stt = tempfile.SpooledTemporaryFile(mode='w+b')
-        else:
-            stt = None
-            
         self.play(self.beep_hi)    
-        rec = self.stt.listen(stt)
+        tmpFile = tempfile.SpooledTemporaryFile(mode='w+b')
+        rec = self.stt.listen(tmpFile)
+        self.logger.debug("received result back from listen function")
         rec.seek(0)
         self.play(self.beep_lo)    
-        response = self.stt.transcribe(stt)
-        return response
+        self.logger.debug("about to transcribe")
+        
+        # only transcribe if we need to        
+        if stt:
+            response = self.stt.transcribe(tmpFile)
+            return response
+        else:
+            return stt
 
 
     # update the chat text with any context sensitive values
