@@ -96,6 +96,7 @@ if __name__ == '__main__':
     # these defaults will be updated from central on connect
     ENVIRON["SecureMode"] = False
     ENVIRON["Identify"] = False
+    ENVIRON["Talking"] = False
 
     # Create reference to our voice class
     VOICE = client_voice.voice(ENVIRON)
