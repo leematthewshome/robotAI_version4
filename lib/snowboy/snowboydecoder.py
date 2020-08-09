@@ -58,7 +58,7 @@ class RingBuffer(object):
 
 
 def play_audio_file(fname=DETECT_DING):
-    cmd = ['aplay', str(filename)]
+    cmd = ['aplay', str(fname)]
     with tempfile.TemporaryFile() as f:
         subprocess.call(cmd, stdout=f, stderr=f)
         f.seek(0)
