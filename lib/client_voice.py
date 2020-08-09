@@ -201,10 +201,10 @@ class voice():
             data = json.loads(body.decode("utf-8"))
             action = data["action"]
             if action == 'chat':
-                ENVIRON["Talking"] = True
+                self.ENVIRON["talking"] = True
                 chatList = data["list"]
                 self.doChat(chatList)
-                ENVIRON["Talking"] = False
+                self.ENVIRON["talking"] = False
             else:
                 self.logger.debug("No logic created yet to handle action = " + action)
         else:

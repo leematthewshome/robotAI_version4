@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     #set placeholder value for our message queue
     ENVIRON = {}
-    ENVIRON["topdir"] = '/home/pi/robotAI4'
+    ENVIRON["topdir"] = '/home/lee/Downloads/robotAI4'
     ENVIRON["listen"] = True
     ENVIRON["queueSrvr"] = queueSrvr
     ENVIRON["queuePort"] = queuePort
