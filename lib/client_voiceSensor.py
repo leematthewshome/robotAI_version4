@@ -75,6 +75,7 @@ class listenLoop(object):
             input = self.VOICE.listen(stt=True)
             # need to submit recorded to to our intent engine. Just print for now.
             print(input)
+            self.VOICE.say("I heard you say... " + input)
             # set listen back to true - rely on client_voice to set to false when busy
             self.ENVIRON["listen"] = True
             
