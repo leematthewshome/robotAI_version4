@@ -28,7 +28,7 @@ queueUser = 'guest'
 queuePass = 'guest'
 debugOn = True
 motionSensor = True
-voiceSensor = True
+voiceSensor = False
 
 
 #---------------------------------------------------------
@@ -94,9 +94,9 @@ if __name__ == '__main__':
     ENVIRON["listen"] = True                                            # indicates pyaudio is free for hotword detection
     ENVIRON["topdir"] = os.path.dirname(os.path.realpath(__file__))
     # these defaults will be updated from central on connect
-    ENVIRON["SecureMode"] = False
-    ENVIRON["Identify"] = False
-    ENVIRON["Talking"] = False
+    ENVIRON["SecureMode"] = True
+    ENVIRON["Identify"] = True
+    ENVIRON["talking"] = False
 
     # Create reference to our voice class
     VOICE = client_voice.voice(ENVIRON)
@@ -149,20 +149,22 @@ if __name__ == '__main__':
             logger.error('Failed to start voice sensor')
     
     
-
+    
     # ---------------------------------------------------------------------------------------
     # Send connect message to Central channel and Start listening on our client channel 
     # ---------------------------------------------------------------------------------------
     if isQueue:
+        logger.info("Sending connection message to message queue")
         properties = pika.BasicProperties(app_id='connect', content_type='text', reply_to=clientName)
         body = clientName 
         channel.basic_publish(exchange='', routing_key='Central', body=body, properties=properties)
         channel.queue_declare(queue=clientName)
+
         try:
             logger.debug('Starting to listen on channel ' + clientName)
             channel.basic_consume(queue=clientName, on_message_callback=callback, auto_ack=True)
             channel.start_consuming()
         except:
             logger.error('Failed to start listening on channel ' + clientName)
-    
+
  
