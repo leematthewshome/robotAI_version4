@@ -9,7 +9,7 @@ import logging
 from ctypes import *
 from contextlib import contextmanager
 
-#Lee AutoLevel - Import library for rms
+# robotAI AutoLevel - Import library for rms
 import audioop
 
 #allow for running from demo.py, client_voiceSensor.py or via robotAI_client.py
@@ -141,7 +141,7 @@ class HotwordDetector(object):
         level = 0
         for item in self.lvlHist:
             level += item
-        return level/50
+        return level/len(self.lvlHist)
 
         
     def start(self, detected_callback=play_audio_file,
@@ -223,8 +223,10 @@ class HotwordDetector(object):
                 continue
 
             status = self.detector.RunDetection(data)
-            #Lee AutoLevel - Average the background noise every time we loop
+            # robotAI - Average the background noise every time we loop
             avg_noise = self.getScore(data)
+            # uncomment the following to constantly show average noise level
+            #print(" Current noise level is " + str(avg_noise))
             
             if status == -1:
                 logger.warning("Error initializing streams or reading audio data")
@@ -241,10 +243,10 @@ class HotwordDetector(object):
                                          time.localtime(time.time()))
                     logger.info(message)
                     
-                    #Lee AutoLevel - Set the average noise level for use by active Listen
+                    # robotAI - Set the average noise level for use by active Listen
                     self.ENVIRON["avg_noise"] = avg_noise
                     
-                    #Lee terminate stream so we can open a new stream for activeListen
+                    # robotAI terminate stream so we can open a new stream for activeListen
                     self.terminate()
                     
                     callback = detected_callback[status-1]
