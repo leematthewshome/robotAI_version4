@@ -19,19 +19,25 @@ import os
 class motionLoop(object):
 
     def __init__(self, ENVIRON):
-        logging.basicConfig()
+        debugOn = True
+    
+        #Set debug level based on details in config DB
         self.logger = logging.getLogger(__name__)
-        #self.logger.level = logging.DEBUG
-        self.logger.level = logging.INFO
+        if debugOn:
+            self.logger.level = logging.DEBUG
+        else:
+            self.logger.level = logging.INFO
+                    
         self.ENVIRON = ENVIRON
-        credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
-        self.parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
+        # Setup details to access the message queue
+        credentials = pika.PlainCredentials(ENVIRON["queueUser"], ENVIRON["queuePass"])
+        self.parameters = pika.ConnectionParameters(ENVIRON["queueSrvr"], ENVIRON["queuePort"], '/',  credentials)
 
         # setup variables for motion detection process
         #-------------------------------------------------
         self.framesCheck = 10                           
-        self.chatDelay = 0
-        self.delay = 10
+        #self.chatDelay = 0		not currently used
+        self.delay = 60
         self.min_area = 500
         self.detectPin = 0
 
@@ -113,12 +119,12 @@ class motionLoop(object):
     def detectionEvent(self, lastAlert, camera, frame):
         # Check lastAlert to see if we need to trigger a new Alert for the motion
         curDTime = datetime.datetime.today()
-        self.logger.debug("Motion detected at %s " % curDTime)
+        self.logger.debug(self.ENVIRON["talking"])
         diff = curDTime - lastAlert
         
         # Only take action if the delay set between actions has expired
         if (diff.seconds) < self.delay:
-            self.logger.debug("Motion delay has not expired. %s seconds remaining." % str(self.delay - diff.seconds)  )             
+            self.logger.debug("Motion detected but %s seconds delay remaining." % str(self.delay - diff.seconds)  )             
         else:
             lastAlert = curDTime
             self.logger.info("Motion detected at %s and motion delay has expired" % curDTime)

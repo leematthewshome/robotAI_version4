@@ -10,6 +10,17 @@ import pymysql
 import json
 import pika
 
+import os
+import base64
+from google.cloud import speech_v1 as speech
+from google.protobuf.json_format import MessageToJson
+
+
+# Insert the correct values from your Google project
+json_file = 'my-home-ai-project-c6ff7abb0b1a.json'
+proj_name = 'my-home-ai-project'
+
+
 
 # create connection to database
 # ----------------------------------------------------------------------------------
@@ -23,6 +34,33 @@ def createConn():
     except:
         return None
     return conn
+
+
+# Submit recording to Google API to convert to text 
+#---------------------------------------------------------------
+def transcribe(data, topdir, logger):
+    transcribed = ''
+
+    json_path = os.path.join(topdir, 'static/google', json_file)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json_path
+    os.environ["GCLOUD_PROJECT"] = proj_name
+
+    config = {'language_code': 'en-US'}
+    audio = {'content': data}
+
+    client = speech.SpeechClient()
+    logger.debug("Calling Google transcribe API")
+    response = client.recognize(config, audio)
+    result_json = MessageToJson(response)
+    result_json = json.loads(result_json)
+    if "results" in result_json:
+        for result in result_json["results"]:
+            transcribed += result["alternatives"][0]["transcript"].upper() + '. '
+        logger.debug("Transcribed: " + transcribed)
+    else:
+        logger.debug("No 'results' in response. Nothing was transcribed")
+
+    return transcribed
 
 
 # ---------------------------------------------------------------------------------
@@ -120,7 +158,7 @@ def doLogic(ENVIRON, QCONN, content, reply_to, body):
         except:
             logger.error('Could not load response as JSON or extract key of "type"')
     elif content == 'audio/wav':
-        logger.info('This is a placeholder for our speech to text functionality')
+        logger.debug('audio/wav received so lets convert to text with stt engine')
         action = "stt"
 
     logger.debug('Action value is: ' + action)
@@ -132,17 +170,30 @@ def doLogic(ENVIRON, QCONN, content, reply_to, body):
         chatid = data["chatItem"]
         logger.debug('Calling getChatPath function')
         result = getChatPath(chatid)
+        
         # return data to requested client 
         result = {'action': 'chat', 'list': result}
         body = json.dumps(result)
         logger.debug("Sending chat text to : " + reply_to)
+        
         channel1 = QCONN.channel()
         channel1.queue_declare(reply_to)
         properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to='Central')
         channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
     elif action == "stt":
         # need to convert the recording to text and obtain intent
-        logger.info('We need to develop a function to convert speech to text')
+        topdir = ENVIRON["topdir"]
+        result = transcribe(body, topdir, logger)
+
+        # placeholder for handling voice request properly. We just return the text here
+        mylist = [{'text': result, 'funct': '', 'next': ''}]
+        result = {'action': 'chat', 'list': mylist}
+        body = json.dumps(result)
+        
+        channel1 = QCONN.channel()
+        channel1.queue_declare(reply_to)
+        properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to='Central')
+        channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
     else:
         # catch all if we didnt expect the action or was blank
         logger.warning('The action value of ' + action + ' has no code to handle it.')

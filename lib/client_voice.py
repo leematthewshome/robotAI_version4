@@ -17,11 +17,9 @@ import datetime
 import pika
 import tempfile 
 
-# import from different points to allow for direct test
-try:
-    import lib.client_stt as client_stt
-except:
-    import client_stt
+import wave
+import audioop
+import pyaudio
 
 
 
@@ -42,12 +40,14 @@ class voice():
 
         self.ENVIRON = ENVIRON
         self.language = language
-        self.stt = client_stt.stt(ENVIRON)
-        
         topdir = ENVIRON["topdir"]
         self.beep_hi = os.path.join(topdir, "static/audio/beep_hi.wav")
         self.beep_lo = os.path.join(topdir, "static/audio/beep_lo.wav")
 
+        # Setup details to access the message queue
+        credentials = pika.PlainCredentials(ENVIRON["queueUser"], ENVIRON["queuePass"])
+        self.parameters = pika.ConnectionParameters(ENVIRON["queueSrvr"], ENVIRON["queuePort"], '/',  credentials)
+        
 
     # Text to speech using Pico2Wave - the most human sounding voice
     #---------------------------------------------------------------
@@ -70,6 +70,7 @@ class voice():
             #    self.logger.debug("Result of cmd was: " + str(output))
         self.play(fname)
         os.remove(fname)
+
 
 
     # Play a WAV file using aplay
@@ -143,24 +144,6 @@ class voice():
         return resp
 
 
-    # call listen function with beep indicators
-    # ------------------------------------------------------
-    def listen(self, stt):
-        self.play(self.beep_hi)    
-        tmpFile = tempfile.SpooledTemporaryFile(mode='w+b')
-        rec = self.stt.listen(tmpFile)
-        self.logger.debug("received result back from listen function")
-        rec.seek(0)
-        self.play(self.beep_lo)    
-        self.logger.debug("about to transcribe")
-        
-        # only transcribe if we need to        
-        if stt:
-            response = self.stt.transcribe(tmpFile)
-            return response
-        else:
-            return stt
-
 
     # update the chat text with any context sensitive values
     # ------------------------------------------------------
@@ -184,6 +167,7 @@ class voice():
         return text
 
 
+
     # Check for a Yes or No. Allows for one loop if no answer. 
     # TODO use NLP later on to determine positive or negative response
     #---------------------------------------------------------------
@@ -204,7 +188,99 @@ class voice():
             return "YES"
         else:
             return "NO"
+            
+
     
+    # function to get sound level score
+    #---------------------------------------------------------------
+    def getScore(self, data):
+        rms = audioop.rms(data, 2)
+        score = rms 
+        return score
+
+
+
+    # Placeholder for function to listen for speech. 
+    #---------------------------------------------------------------
+    def listen(self, stt):
+        self.logger.debug("Running stt.listen function ")
+        self.play(self.beep_hi)    
+        
+        _audio = pyaudio.PyAudio()
+        RATE = 16000
+        CHUNK = 1024
+        LISTEN_TIME = 10
+
+        # Set threshold to the current average background noise
+        # TODO if voiceSensor not running we need another way to calc THRESHOLD
+        try:
+            THRESHOLD = self.ENVIRON["avg_noise"] 
+        except:
+            THRESHOLD = 100
+
+        # prepare recording stream
+        self.logger.debug("Opening pyaudio recording stream")
+        stream = _audio.open(format=pyaudio.paInt16,
+                                  channels=1,
+                                  rate=RATE,
+                                  input=True,
+                                  frames_per_buffer=CHUNK)
+        frames = []
+
+        # waitVal determines the pause before a command is expected. (A value of 10 is around 1 second)
+        waitVal = 30
+        lastN = [THRESHOLD * waitVal for i in range(waitVal)]
+
+        for i in range(0, int(RATE / CHUNK * LISTEN_TIME)):
+            data = stream.read(CHUNK)
+            frames.append(data)
+            score = self.getScore(data)
+            lastN.pop(0)
+            lastN.append(score)
+            average = sum(lastN) / float(len(lastN))
+
+            #If average sound level is below cutoff then we have silence, so stop listening
+            if average < THRESHOLD:
+                break
+
+        # save the audio data
+        stream.stop_stream()
+        stream.close()
+        self.logger.debug("Closed pyaudio recording stream")
+        self.play(self.beep_lo)    
+
+        # Save the recording to file and transcribe only if required
+        # TODO Do we even need to put in a file????????????????????
+        if stt:
+            with tempfile.SpooledTemporaryFile(mode='w+b') as myFile:
+                wav_fp = wave.open(myFile, 'wb')
+                wav_fp.setnchannels(1)
+                wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
+                wav_fp.setframerate(RATE)
+                wav_fp.writeframes(b''.join(frames))
+                wav_fp.close()
+                myFile.seek(0)
+                self.logger.debug("Sending recording to brain for STT and intent")
+                
+                # send data to brain and response will be posted to message queue 
+                #self.stt.transcribe(myFile)
+                wavData = myFile.read()
+                try:
+                    properties = pika.BasicProperties(app_id='voice', content_type='audio/wav', reply_to=self.ENVIRON["clientName"])
+                    before = datetime.datetime.today()
+                    connection = pika.BlockingConnection(self.parameters)
+                    channel = connection.channel()
+                    channel.basic_publish(exchange='', routing_key='Central', body=wavData, properties=properties)
+                    connection.close()
+                    after = datetime.datetime.today()
+                    self.logger.info("Time taken: " + str(after-before))                 
+                except:
+                    self.logger.error('Unable to send recording to Message Queue ')
+
+        else:
+            return None
+                    
+                    
                             
     # General function to work out what to do from 'action' 
     # ------------------------------------------------------
@@ -214,11 +290,9 @@ class voice():
             action = data["action"]
             if action == 'chat':
                 self.ENVIRON["talking"] = True
-                self.logger.info("I have now set self.ENVIRON['talking'] = " + str(self.ENVIRON["talking"]))
                 chatList = data["list"]
                 self.doChat(chatList)
                 self.ENVIRON["talking"] = False
-                self.logger.info("I have now set self.ENVIRON['talking'] = " + str(self.ENVIRON["talking"]))
             else:
                 self.logger.debug("No logic created yet to handle action = " + action)
         else:
