@@ -10,6 +10,7 @@ Author: Lee Matthews 2020
 import pika
 import socket
 import logging
+import os
 
 # import shared utility finctions
 from lib import common_utils as utils
@@ -80,6 +81,7 @@ if __name__ == '__main__':
     # Setup Environment data to be shared with clients
     #-----------------------------------------------------
     ENVIRON = {}
+    ENVIRON["topdir"] = os.path.dirname(os.path.realpath(__file__))
     ENVIRON["SecureMode"] = False
     ENVIRON["Identify"] = True
 

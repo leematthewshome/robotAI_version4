@@ -27,8 +27,8 @@ queuePort = 5672
 queueUser = 'guest'
 queuePass = 'guest'
 debugOn = True
-motionSensor = True
-voiceSensor = False
+motionSensor = False
+voiceSensor = True
 
 
 #---------------------------------------------------------
