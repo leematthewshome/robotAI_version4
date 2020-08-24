@@ -8,16 +8,22 @@ Author: Lee Matthews 2018 - updated 2020
 
 import logging
 import time
-import pika
-import base64
-import datetime
-"""
+
+import tempfile
 import wave
 import audioop
 import pyaudio
 import os
-"""
 
+import base64
+import json
+from google.cloud import speech_v1 as speech
+from google.protobuf.json_format import MessageToJson
+
+
+# Insert the correct values from your Google project
+json_file = 'my-home-ai-project-c6ff7abb0b1a.json'
+proj_name = 'my-home-ai-project'
 
 
 # Speech to text class. We will use an external engine (google?) for stt operations
@@ -34,12 +40,6 @@ class stt():
             self.logger.level = logging.INFO
 
         self.ENVIRON = ENVIRON
-
-        # Setup details to access the message queue
-        credentials = pika.PlainCredentials(ENVIRON["queueUser"], ENVIRON["queuePass"])
-        self.parameters = pika.ConnectionParameters(ENVIRON["queueSrvr"], ENVIRON["queuePort"], '/',  credentials)
-        
-    """
         path = ENVIRON["topdir"]
         self.json_path = os.path.join(path, 'static/google', json_file)
 
@@ -111,25 +111,40 @@ class stt():
         self.logger.debug("Returning file to client_voice.listen function")
 
         return myFile      
-    """     
+        
 
 
+    # Submit recording to Google API to convert to text 
+    #---------------------------------------------------------------
     def transcribe(self, fp):
-        wavData = fp.read()
-        try:
-            properties = pika.BasicProperties(app_id='voice', content_type='audio/wav', reply_to=self.ENVIRON["clientName"])
-            before = datetime.datetime.today()
-            connection = pika.BlockingConnection(self.parameters)
-            channel = connection.channel()
-            channel.basic_publish(exchange='', routing_key='Central', body=wavData, properties=properties)
-            connection.close()
-            after = datetime.datetime.today()
-            self.logger.info("Time taken: " + str(after-before))                 
-        except:
-            self.logger.error('Unable to send recording to Message Queue ')
+        #transcribed = []
+        transcribed = ''
 
+        data = fp.read()
+        speech_content_bytes = base64.b64encode(data)
+        speech_content = speech_content_bytes.decode('utf-8')
 
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.json_path
+        os.environ["GCLOUD_PROJECT"] = proj_name
 
+        config = {'language_code': 'en-US'}
+        audio = {'content': data}
+
+        client = speech.SpeechClient()
+        response = client.recognize(config, audio)
+        result_json = MessageToJson(response)
+        result_json = json.loads(result_json)
+
+        if 'results' in result_json:
+            for result in result_json["results"]:
+                #transcribed.append(result["alternatives"][0]["transcript"].upper())
+                transcribed += result["alternatives"][0]["transcript"].upper() + ' '
+        else:
+            return ""
+            
+        self.logger.debug("Transcribed: " + transcribed)
+        return transcribed
+        
 
 
 
@@ -143,6 +158,7 @@ if __name__ == '__main__':
     mystt = stt(ENVIRON)
     result = mystt.listen(True)
     print(result)
+
 
 
 

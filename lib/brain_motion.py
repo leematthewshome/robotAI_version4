@@ -26,9 +26,9 @@ class detectorAPI:
         self.proto_path = os.path.join(self.file_path, "MLModels/MobileNetSSD_deploy.prototxt.txt")
         self.conf_cutoff = 0.5
 
-	# initialize the list of class labels for detection
+        # initialize the list of class labels for detection
         self.CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-		"dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+                "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
         self.net = cv2.dnn.readNetFromCaffe(self.proto_path, self.model_path)
 
 
@@ -51,7 +51,7 @@ class detectorAPI:
                 # extract the index of the class label from the `detections`
                 idx = int(detections[0, 0, i, 1])
                 className = self.CLASSES[idx]
-		        #check if there is already an entry in dictionary
+                        #check if there is already an entry in dictionary
                 if className in dictObjects:
                     dictObjects[className] = dictObjects[className] + 1
                 else:
@@ -61,11 +61,6 @@ class detectorAPI:
         return dictObjects
 
 
-
-
-
-
-
 #---------------------------------------------------------------------------
 # Function called by robotAI_brain for this set of logic
 #---------------------------------------------------------------------------
@@ -73,7 +68,7 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
     objectModel = "MLModels/MobileNetSSD_deploy.caffemodel"
     objectProto = "MLModels/MobileNetSSD_deploy.prototxt.txt"
     debugOn = True
-    
+
     # setup logging using the python logging library
     #-----------------------------------------------------
     logging.basicConfig()
@@ -82,7 +77,7 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
         logger.level = logging.DEBUG
     else:
         logger.level = logging.INFO
-    
+
     # If we received an image then check it for objects
     if content == "image/jpg":
         logger.debug('Decode the content and save the file')
@@ -91,7 +86,7 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
         with open('captured.jpg', 'wb') as f_output:
             f_output.write(imgbin)
         print("saved captured.jpg - need to save unique filename eventually")
-        
+
         # use Machine learning to determine if a person exists in the image
         logger.debug('Analysing the image using detectorAPI class')
         dt = detectorAPI(logger, objectModel, objectProto)

@@ -19,28 +19,33 @@ import os
 class motionLoop(object):
 
     def __init__(self, ENVIRON):
-        debugOn = True
-    
-        #Set debug level based on details in config DB
+        logging.basicConfig()
         self.logger = logging.getLogger(__name__)
-        if debugOn:
-            self.logger.level = logging.DEBUG
-        else:
-            self.logger.level = logging.INFO
-                    
+        #self.logger.level = logging.DEBUG
+        self.logger.level = logging.INFO
         self.ENVIRON = ENVIRON
-        # Setup details to access the message queue
-        credentials = pika.PlainCredentials(ENVIRON["queueUser"], ENVIRON["queuePass"])
-        self.parameters = pika.ConnectionParameters(ENVIRON["queueSrvr"], ENVIRON["queuePort"], '/',  credentials)
+        credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
+        self.parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
 
         # setup variables for motion detection process
         #-------------------------------------------------
         self.framesCheck = 10                           
-        #self.chatDelay = 0		not currently used
-        self.delay = 60
+        self.chatDelay = 300
+        self.delay = 30
         self.min_area = 500
         self.detectPin = 0
 
+        self.setDelay()
+        self.logger.debug("Motion detection delay set to " + str(self.delay))
+
+
+    # Reset the delay counter based on mode
+    def setDelay(self):
+        if self.ENVIRON["secureMode"]:
+            self.delay = 20
+        else:
+            self.delay = 300
+            
 
     # Loop to keep checking every 5 seconds whether we should turn motion detection on
     #------------------------------------------------------------------------------------
@@ -119,34 +124,36 @@ class motionLoop(object):
     def detectionEvent(self, lastAlert, camera, frame):
         # Check lastAlert to see if we need to trigger a new Alert for the motion
         curDTime = datetime.datetime.today()
-        self.logger.debug(self.ENVIRON["talking"])
         diff = curDTime - lastAlert
-        
-        # Only take action if the delay set between actions has expired
-        if (diff.seconds) < self.delay:
-            self.logger.debug("Motion detected but %s seconds delay remaining." % str(self.delay - diff.seconds)  )             
-        else:
-            lastAlert = curDTime
-            self.logger.info("Motion detected at %s and motion delay has expired" % curDTime)
+
+        # If we are already talking simply reset delay variales
+        if self.ENVIRON["talking"]:
+            self.logger.debug('Motion detected but busy right now so just resetting counter. ')
+            # reset our delay counters
+            self.setDelay()            
+            # TODO add code to later try to identify who we might be talking to
             
-            # Send a message to the brain over the Message Queue
-            if self.ENVIRON["SecureMode"] or self.ENVIRON["Identify"]:
+        else:  
+            # check for either security or friendly mode and delay has expired
+            if (self.ENVIRON["secureMode"] or self.ENVIRON["friendMode"]) and (diff.seconds > self.delay):
+                lastAlert = curDTime
+                self.logger.debug('Motion detected and timer has expired so taking action. ')
                 retval, image = camera.read()
                 retval, buffer = cv2.imencode('.jpg', image)
                 jpgb64 = base64.b64encode(buffer)
                 properties = pika.BasicProperties(app_id='motion', content_type='image/jpg', reply_to=self.ENVIRON["clientName"])
                 lastAlert = datetime.datetime.today()
                 try:
-                    before = datetime.datetime.today()
                     connection = pika.BlockingConnection(self.parameters)
                     channel = connection.channel()
                     channel.basic_publish(exchange='', routing_key='Central', body=jpgb64, properties=properties)
                     connection.close()
-                    after = datetime.datetime.today()
-                    self.logger.info("Time taken: " + str(after-before))                 
                 except:
                     self.logger.error('Unable to send image to Message Queue ' + self.ENVIRON["queueSrvr"])
-
+            else:
+                #self.logger.debug("Motion detected but %s seconds delay remains" % str(self.delay - diff.seconds)  )     
+                pass        
+                
         return lastAlert
 
 #---------------------------------------------------------------------------
@@ -184,4 +191,5 @@ if __name__ == "__main__":
     doSensor(ENVIRON)
     
     doSensor(ENVIRON, SENSORQ, MIC)
+
 

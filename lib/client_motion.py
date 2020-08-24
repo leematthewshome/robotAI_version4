@@ -62,3 +62,4 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
     else:
          logger.debug("0 person detected in image, so taking no action")
 
+

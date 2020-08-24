@@ -29,7 +29,7 @@ class listenLoop(object):
     def __init__(self, ENVIRON, VOICE):
         debug = True
         self.hotword = 'computer.umdl'
-        self.sensitivty = .8
+        self.sensitivty = .5
         
         self.ENVIRON = ENVIRON
         self.TOPDIR = ENVIRON["topdir"]
@@ -72,10 +72,10 @@ class listenLoop(object):
             # set system to indicate things are busy
             self.ENVIRON["listen"] = False
             self.logger.debug("KEYWORD DETECTED. Beginning active listen ")
-            
-            # record voice and send to brain via message queue. Relevant response will be posted back to queue 
-            self.VOICE.listen(stt=True)
-
+            input = self.VOICE.listen(stt=True)
+            # need to submit recorded to to our intent engine. Just print for now.
+            print(input)
+            self.VOICE.say("I heard you say... " + input)
             # set listen back to true - rely on client_voice to set to false when busy
             self.ENVIRON["listen"] = True
             
@@ -158,3 +158,4 @@ if __name__ == "__main__":
     VOICE = client_voice.voice(ENVIRON)
     
     doSensor(ENVIRON, VOICE)
+
