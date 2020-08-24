@@ -27,7 +27,7 @@ queuePort = 5672
 queueUser = 'guest'
 queuePass = 'guest'
 debugOn = True
-motionSensor = False
+motionSensor = True
 voiceSensor = True
 
 
@@ -94,9 +94,9 @@ if __name__ == '__main__':
     ENVIRON["listen"] = True                                            # indicates pyaudio is free for hotword detection
     ENVIRON["topdir"] = os.path.dirname(os.path.realpath(__file__))
     # these defaults will be updated from central on connect
-    ENVIRON["SecureMode"] = True
-    ENVIRON["Identify"] = True
-    ENVIRON["talking"] = False
+    ENVIRON["secureMode"] = False
+    ENVIRON["friendMode"] = True
+    ENVIRON["talking"] = False			 
 
     # Create reference to our voice class
     VOICE = client_voice.voice(ENVIRON)

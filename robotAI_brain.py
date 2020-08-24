@@ -54,11 +54,9 @@ def callback(ch, method, properties, body):
     elif app_id == 'motion':
         import lib.brain_motion as motion
         motion.doLogic(ENVIRON, connection, content, reply_to, body)
-    # VOICE Logic changes
     elif app_id == 'voice':
         import lib.brain_voice as voice
         voice.doLogic(ENVIRON, connection, content, reply_to, body)
-    # End VOICE changes
     else:
         logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
     
