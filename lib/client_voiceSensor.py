@@ -13,6 +13,7 @@ import logging
 import signal
 import os
 import time
+import pika
 #allow for running listenloop either in isolation or via robotAI.py
 try:
     from lib.snowboy import robotAI_snowboy
@@ -29,7 +30,7 @@ class listenLoop(object):
     def __init__(self, ENVIRON, VOICE):
         debug = True
         self.hotword = 'computer.umdl'
-        self.sensitivty = .5
+        self.sensitivty = .4
         
         self.ENVIRON = ENVIRON
         self.TOPDIR = ENVIRON["topdir"]
@@ -46,6 +47,10 @@ class listenLoop(object):
         
         #set variable for snowboy
         self.interrupted = False
+
+        # Setup details to access the message queue
+        credentials = pika.PlainCredentials(ENVIRON["queueUser"], ENVIRON["queuePass"])
+        self.parameters = pika.ConnectionParameters(ENVIRON["queueSrvr"], ENVIRON["queuePort"], '/',  credentials)
 
 
     #Snowboy signal_handler
@@ -72,10 +77,18 @@ class listenLoop(object):
             # set system to indicate things are busy
             self.ENVIRON["listen"] = False
             self.logger.debug("KEYWORD DETECTED. Beginning active listen ")
-            input = self.VOICE.listen(stt=True)
-            # need to submit recorded to to our intent engine. Just print for now.
-            print(input)
-            self.VOICE.say("I heard you say... " + input)
+            response = self.VOICE.listen(stt=True)
+            
+            # Submit returned text to our intent engine. Then brain will respond over the msgqueue
+            body = '{"action": "getResponse", "text": "' + response + '"}'
+            self.logger.debug("About to send this data: " +body)
+            connection = pika.BlockingConnection(self.parameters)
+            channel1 = connection.channel()
+            channel1.queue_declare("Central")
+            props = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=self.ENVIRON["clientName"])
+            channel1.basic_publish(exchange='', routing_key='Central', body=body, properties=props)
+            connection.close()
+            
             # set listen back to true - rely on client_voice to set to false when busy
             self.ENVIRON["listen"] = True
             

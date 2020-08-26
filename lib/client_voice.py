@@ -161,19 +161,10 @@ class voice():
         # only transcribe if we need to        
         if stt:
             response = self.stt.transcribe(tmpFile)
-            # Request chat data from brain
-            body = '{"action": "getResponse", "text": "' + response + '"}'
-            self.logger.debug("About to send this data: " +body)
-            connection = pika.BlockingConnection(self.parameters)
-            channel1 = connection.channel()
-            channel1.queue_declare("Central")
-            props = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=self.ENVIRON["clientName"])
-            channel1.basic_publish(exchange='', routing_key='Central', body=body, properties=props)
-            connection.close()
-
-            return ""
+            return response
         else:
             return stt
+
 
 
     # update the chat text with any context sensitive values
