@@ -40,3 +40,7 @@ Download Snowboy project from Github, unzip, change directory to snowboy-master/
 Installation Specific to Server / Brain
 ---------------------------------------
 sudo pip3 install PyMySQL
+
+sudo pip3 install --upgrade tensorflow
+
+
