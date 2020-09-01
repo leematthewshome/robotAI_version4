@@ -33,10 +33,6 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
         logger.error("Response from brain is not a valid JSON structure")
         body_json = {}
 
-    # Get our motion detection settings from environment
-    SecureMode = ENVIRON["SecureMode"] 
-    Identify = ENVIRON["Identify"] 
-   
     # Check if a person was detected
     if 'person' in body_json:
         persons = body_json["person"]
@@ -48,9 +44,9 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
         if ENVIRON["talking"]:
             logger.debug("We are already talking on this device, so ignoring motion for now")
         else:
-            if SecureMode:
+            if ENVIRON["secureMode"]:
                 body = '{"action": "getChat", "chatItem": "SECURITY-0"}'
-            if Identify:
+            elif ENVIRON["friendMode"]:
                 body = '{"action": "getChat", "chatItem": "GREETA-0"}'
             # Request chat data from brain
             logger.debug("About to send this data: " +body)

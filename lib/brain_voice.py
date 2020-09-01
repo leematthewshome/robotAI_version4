@@ -10,6 +10,9 @@ import pymysql
 import json
 import pika
 
+# imports for the ML Chatbot
+import numpy as np
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # create connection to database
 # ----------------------------------------------------------------------------------
@@ -23,6 +26,24 @@ def createConn():
     except:
         return None
     return conn
+
+
+# Send details to the message queue
+# ----------------------------------------------------------------------------------
+def sendMessage(logger, ENVIRON, reply_to, body):
+    try:
+        credentials = pika.PlainCredentials(ENVIRON["queueUser"], ENVIRON["queuePass"])
+        parameters = pika.ConnectionParameters(ENVIRON["queueSrvr"], ENVIRON["queuePort"], '/',  credentials)
+        connection = pika.BlockingConnection(parameters)
+        channel1 = connection.channel()
+        channel1.queue_declare(reply_to)
+        properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["brainQueue"])
+        channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
+        connection.close()
+    except:
+        logger.error('There was an error sending the message to the queue')
+        return False
+    return True
 
 
 # ---------------------------------------------------------------------------------
@@ -97,7 +118,7 @@ def getChatPath(chatid='0-GREETA-0'):
 #---------------------------------------------------------------------------
 # Function called by robotAI_brain for this set of logic
 #---------------------------------------------------------------------------
-def doLogic(ENVIRON, QCONN, content, reply_to, body):
+def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, encoder):
     debugOn = True
     action = ""
 
@@ -110,6 +131,7 @@ def doLogic(ENVIRON, QCONN, content, reply_to, body):
     else:
         logger.level = logging.INFO
 
+
     # If we received JSON then get the requested action
     #-----------------------------------------------------
     if content == 'application/json':
@@ -120,10 +142,11 @@ def doLogic(ENVIRON, QCONN, content, reply_to, body):
         except:
             logger.error('Could not load response as JSON or extract key of "type"')
     elif content == 'audio/wav':
-        logger.info('This is a placeholder for our speech to text functionality')
+        logger.info('This is a placeholder for our speech to text functionality. If we ever move to the brain.')
         action = "stt"
 
     logger.debug('Action value is: ' + action)
+
 
     # Execute requested VOICE action to execute
     #-----------------------------------------------------
@@ -132,17 +155,38 @@ def doLogic(ENVIRON, QCONN, content, reply_to, body):
         chatid = data["chatItem"]
         logger.debug('Calling getChatPath function')
         result = getChatPath(chatid)
-        # return data to requested client
+        # return data to the client device that initiated the request 
         result = {'action': 'chat', 'list': result}
         body = json.dumps(result)
         logger.debug("Sending chat text to : " + reply_to)
-        channel1 = QCONN.channel()
-        channel1.queue_declare(reply_to)
-        properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to='Central')
-        channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
-    elif action == "stt":
-        # need to convert the recording to text and obtain intent
-        logger.info('We need to develop a function to convert speech to text')
+        result = sendMessage(logger, ENVIRON, reply_to, body)
+        
+    elif action == "getResponse":
+        # need to get the chat response from the ML Chat model
+        max_len = 20
+        trunc_type = 'post'
+        result = []    
+        text = data["text"]
+        
+        logger.debug('Running prediction for: ' + text)
+        predictions = chatmodel.predict(pad_sequences(tokenizer.texts_to_sequences([text]), truncating=trunc_type, maxlen=max_len))[0]
+        highest = predictions[np.argmax(predictions)]
+        category = encoder.inverse_transform([np.argmax(predictions)]) 
+        logger.debug("MLChatBot found " + str(highest) + " percent match to " + str(category))
+        if highest > .7:
+            for i in chatdata['intents']:
+                if i['tag']==category:
+                    response = np.random.choice(i['responses'])
+        else:
+            response = "Sorry, I dont have a suitable response to that"
+
+        response = {'text': response, 'funct': '', 'next': ''}    
+        result.append(response)
+        # return data to the client device that initiated the request 
+        result = {'action': 'chat', 'list': result}
+        body = json.dumps(result)
+        logger.debug("Sending chat text to : " + reply_to)
+        result = sendMessage(logger, ENVIRON, reply_to, body)
     else:
         # catch all if we didnt expect the action or was blank
         logger.warning('The action value of ' + action + ' has no code to handle it.')

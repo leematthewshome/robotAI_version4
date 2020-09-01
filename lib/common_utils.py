@@ -8,6 +8,19 @@ Author: Lee Matthews 2020
 import time
 
 
+import configparser
+
+def setVariables(section):
+    config = configparser.ConfigParser()
+    config.sections()
+    config.read('/home/lee/Downloads/robotAI4/settings.ini')
+    data = dict(config.items(section))
+    for key in data:
+        print('global ' + key)
+        exec('global ' + key)
+        exec(key + ' = ' + data[key])
+    
+    
 # Function to check if we can access the internet
 def testInternet(logger, tries, server="www.google.com"):
     import socket

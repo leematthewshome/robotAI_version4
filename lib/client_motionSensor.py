@@ -72,7 +72,6 @@ class motionLoop(object):
         
         # loop over the frames of the video feed and detect motion
         while True:
-                
             # grab the current frame 
             (grabbed, frame) = camera.read()
             frames += 1
@@ -94,7 +93,7 @@ class motionLoop(object):
             firstFrame = gray
             # dilate the thresholded image to fill in holes, then find contours on thresholded image
             thresh = cv2.dilate(thresh, None, iterations=2)
-            #open CV seems to change the number of params returned
+            # diff versions of open CV change the number of params returned
             try:
                 (img, cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             except:
@@ -132,6 +131,7 @@ class motionLoop(object):
             # reset our delay counters
             self.setDelay()            
             # TODO add code to later try to identify who we might be talking to
+            # TODO add code to later to record photos of who we are talking to
             
         else:  
             # check for either security or friendly mode and delay has expired
