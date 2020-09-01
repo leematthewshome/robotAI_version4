@@ -11,21 +11,58 @@ import pika
 import socket
 import logging
 import os
+import configparser
 
-# import shared utility finctions
+# import python modules for chatbot
+import json 
+import numpy as np 
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import load_model
+
+# import shared utility functions (this also sets some common variables)
 from lib import common_utils as utils
 
 
 #---------------------------------------------------------
-# Will eventually work out a place to store config data
-# Just hard code in here for now
+# Fetch our config variables from config file
 #---------------------------------------------------------
-clientName = 'Central'
-queueSrvr = '192.168.0.50'
-queuePort = 5672
-queueUser = 'guest'
-queuePass = 'guest'
-debugOn = True
+topdir = os.path.dirname(os.path.realpath(__file__))
+myfile = os.path.join(topdir, 'settings.ini')
+config = configparser.ConfigParser()
+config.read(myfile)
+
+#---------------------------------------------------------
+# Cache our chatbot model here to speed up response
+#---------------------------------------------------------
+modelpath = os.path.join(topdir, 'static/MLModels/chatbot')
+chatpath  = os.path.join(topdir, 'static/MLModels/chatbot/chatschema.json')
+
+chatmodel = load_model(modelpath)
+with open(chatpath) as file:
+    chatdata = json.load(file)
+
+training_sentences = []
+training_labels = []
+for intent in chatdata['intents']:
+    for pattern in intent['patterns']:
+        training_sentences.append(pattern)
+        training_labels.append(intent['tag'])
+
+# encode our list of tags  
+encoder = LabelEncoder()
+encoder.fit(training_labels)
+training_labels = encoder.transform(training_labels)
+
+vocab_size = 20000
+embedding_dim = 16
+oov_token = "<OOV>"
+max_len = 20
+trunc_type = 'post'
+
+tokenizer = Tokenizer(num_words=vocab_size, oov_token=oov_token) 
+tokenizer.fit_on_texts(training_sentences)
 
 
 #---------------------------------------------------------
@@ -49,14 +86,14 @@ def callback(ch, method, properties, body):
         body = json.dumps(ENVIRON)        
         channel1 = connection.channel()
         channel1.queue_declare(reply_to)
-        properties = pika.BasicProperties(app_id='environ', content_type='application/json', reply_to=clientName)
+        properties = pika.BasicProperties(app_id='environ', content_type='application/json', reply_to=config['QUEUE']['brainQueue'])
         channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
     elif app_id == 'motion':
         import lib.brain_motion as motion
         motion.doLogic(ENVIRON, connection, content, reply_to, body)
     elif app_id == 'voice':
         import lib.brain_voice as voice
-        voice.doLogic(ENVIRON, connection, content, reply_to, body)
+        voice.doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, encoder)
     else:
         logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
     
@@ -71,7 +108,7 @@ if __name__ == '__main__':
     #-----------------------------------------------------
     logging.basicConfig()
     logger = logging.getLogger("robotAI_brain")
-    if debugOn:
+    if config['QUEUE']['brainQueue']:
         logger.level = logging.DEBUG
     else:
         logger.level = logging.INFO
@@ -79,9 +116,14 @@ if __name__ == '__main__':
     # Setup Environment data to be shared with clients
     #-----------------------------------------------------
     ENVIRON = {}
-    ENVIRON["topdir"] = os.path.dirname(os.path.realpath(__file__))
+    ENVIRON["topdir"] = topdir
     ENVIRON["SecureMode"] = False
     ENVIRON["Identify"] = True
+    ENVIRON["queueSrvr"] = config['QUEUE']['queueSrvr']
+    ENVIRON["queuePort"] = config['QUEUE']['queuePort']
+    ENVIRON["queueUser"] = config['QUEUE']['queueUser']
+    ENVIRON["queuePass"] = config['QUEUE']['queuePass']
+    ENVIRON["brainQueue"] = config['QUEUE']['brainQueue']
 
     # define some variables
     isWWWeb = False		
@@ -94,26 +136,26 @@ if __name__ == '__main__':
     # Try and connect to the message queue
     #------------------------------------------------------
     try:
-        credentials = pika.PlainCredentials(queueUser, queuePass)
-        parameters = pika.ConnectionParameters(queueSrvr, queuePort, '/',  credentials)
+        credentials = pika.PlainCredentials(config['QUEUE']['queueUser'], config['QUEUE']['queuePass'])
+        parameters = pika.ConnectionParameters(config['QUEUE']['queueSrvr'], config['QUEUE']['queuePort'], '/',  credentials)
         connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
-        channel.queue_declare(queue='Central')
+        channel.queue_declare(queue=config['QUEUE']['brainQueue'])
         isQueue = True
-        logger.debug('Connected to Message Queue ' + queueSrvr)
+        logger.debug('Connected to Message Queue ' + config['QUEUE']['queueSrvr'])
     except:
-        logger.error('Unable to connect to Message Queue ' + queueSrvr)
+        logger.error('Unable to connect to Message Queue ' + config['QUEUE']['queueSrvr'])
 
 
     # If successful start listening on Central channel 
     #------------------------------------------------------
     if isQueue:
         try:
-            logger.debug('Starting to listen on channel ' + clientName)
-            channel.basic_consume(queue=clientName, on_message_callback=callback, auto_ack=True)
+            logger.debug('Starting to listen on channel ' + config['QUEUE']['brainQueue'])
+            channel.basic_consume(queue=config['QUEUE']['brainQueue'], on_message_callback=callback, auto_ack=True)
             channel.start_consuming()
-            logger.debug('Now listening on channel ' + clientName)
+            logger.debug('Now listening on channel ' + config['QUEUE']['brainQueue'])
         except:
-            logger.error('Failed to start listening on channel ' + clientName)
+            logger.error('Failed to start listening on channel ' + config['QUEUE']['brainQueue'])
     
    

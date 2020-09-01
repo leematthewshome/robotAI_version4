@@ -12,6 +12,7 @@ import logging
 import json
 import os
 from multiprocessing import Process, Manager, Queue
+import configparser
 
 # import shared utility finctions
 from lib import common_utils as utils
@@ -19,16 +20,12 @@ from lib import client_voice
 
 
 #---------------------------------------------------------
-# Get general configuration details and setup logging
+# Fetch our config variables from config file
 #---------------------------------------------------------
-clientName = 'ClientDefault'
-queueSrvr = '192.168.0.50'
-queuePort = 5672
-queueUser = 'guest'
-queuePass = 'guest'
-debugOn = True
-motionSensor = True
-voiceSensor = True
+topdir = os.path.dirname(os.path.realpath(__file__))
+myfile = os.path.join(topdir, 'settings.ini')
+config = configparser.ConfigParser()
+config.read(myfile)
 
 
 #---------------------------------------------------------
@@ -73,10 +70,9 @@ def callback(ch, method, properties, body):
 if __name__ == '__main__':
 
     # setup logging using the python logging library
-    debugOn = False
     logging.basicConfig()
     logger = logging.getLogger("robotAI_client")
-    if debugOn:
+    if config['DEBUG']['debugClient']:
         logger.level = logging.DEBUG
     else:
         logger.level = logging.INFO
@@ -85,17 +81,17 @@ if __name__ == '__main__':
     #------------------------------------------------------
     mgr = Manager()
     ENVIRON = mgr.dict()
-    ENVIRON["queueSrvr"] = queueSrvr
-    ENVIRON["queuePort"] = queuePort
-    ENVIRON["queueUser"] = queueUser
-    ENVIRON["queuePass"] = queuePass
-    ENVIRON["clientName"] = clientName                                  #the name assigned to our client device, eg. FrontDoor
-    ENVIRON["motion"] = motionSensor                                    #flags whether to run motion sensor
+    ENVIRON["queueSrvr"] = config['QUEUE']['queueSrvr']
+    ENVIRON["queuePort"] = config['QUEUE']['queuePort']
+    ENVIRON["queueUser"] = config['QUEUE']['queueUser']
+    ENVIRON["queuePass"] = config['QUEUE']['queuePass']
+    ENVIRON["clientName"] = config['CLIENT']['clientName']              # the name assigned to our client device, eg. FrontDoor
+    ENVIRON["motion"] = config['CLIENT']['motionSensor']                # flags whether to run motion sensor
     ENVIRON["listen"] = True                                            # indicates pyaudio is free for hotword detection
-    ENVIRON["topdir"] = os.path.dirname(os.path.realpath(__file__))
+    ENVIRON["topdir"] = topdir
     # these defaults will be updated from central on connect
     ENVIRON["secureMode"] = False
-    ENVIRON["friendMode"] = True
+    ENVIRON["friendMode"] = False
     ENVIRON["talking"] = False			 
 
     # Create reference to our voice class
@@ -111,21 +107,21 @@ if __name__ == '__main__':
     # Try and connect to the message queue
     #------------------------------------------------------
     try:
-        credentials = pika.PlainCredentials(queueUser, queuePass)
-        parameters = pika.ConnectionParameters(queueSrvr, queuePort, '/',  credentials)
+        credentials = pika.PlainCredentials(config['QUEUE']['queueUser'], config['QUEUE']['queuePass'])
+        parameters = pika.ConnectionParameters(config['QUEUE']['queueSrvr'], config['QUEUE']['queuePort'], '/',  credentials)
         connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
-        channel.queue_declare(queue='Central')
+        channel.queue_declare(queue=config['CLIENT']['clientName'])
         isQueue = True
-        logger.debug('Connected to Message Queue ' + queueSrvr)
+        logger.debug('Connected to Message Queue ' + config['QUEUE']['queueSrvr'])
     except:
-        logger.error('Unable to connect to Message Queue ' + queueSrvr)
+        logger.error('Unable to connect to Message Queue ' + config['QUEUE']['queueSrvr'])
 
     
     # ---------------------------------------------------------------------------------------
     # kick off motion sensor process based on enabled = TRUE
     # ---------------------------------------------------------------------------------------
-    if motionSensor:
+    if config['CLIENT']['motionSensor']:
         logger.info("Starting motion sensor")
         try:
             from lib import client_motionSensor
@@ -139,7 +135,7 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------
     # kick off voice sensor process based on enabled = TRUE
     # ---------------------------------------------------------------------------------------
-    if voiceSensor:
+    if config['CLIENT']['voiceSensor']:
         logger.info("Starting voice sensor")
         try:
             from lib import client_voiceSensor
@@ -155,16 +151,16 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------
     if isQueue:
         logger.info("Sending connection message to message queue")
-        properties = pika.BasicProperties(app_id='connect', content_type='text', reply_to=clientName)
-        body = clientName 
-        channel.basic_publish(exchange='', routing_key='Central', body=body, properties=properties)
-        channel.queue_declare(queue=clientName)
+        properties = pika.BasicProperties(app_id='connect', content_type='text', reply_to=config['CLIENT']['clientName'])
+        body = config['QUEUE']['queueSrvr'] 
+        channel.basic_publish(exchange='', routing_key=config['QUEUE']['brainQueue'], body=body, properties=properties)
+        channel.queue_declare(queue=config['QUEUE']['queueSrvr'])
 
         try:
-            logger.debug('Starting to listen on channel ' + clientName)
-            channel.basic_consume(queue=clientName, on_message_callback=callback, auto_ack=True)
+            logger.debug('Starting to listen on channel ' + config['QUEUE']['queueSrvr'])
+            channel.basic_consume(queue=config['CLIENT']['clientName'], on_message_callback=callback, auto_ack=True)
             channel.start_consuming()
         except:
-            logger.error('Failed to start listening on channel ' + clientName)
+            logger.error('Failed to start listening on channel ' + config['QUEUE']['queueSrvr'])
 
  
