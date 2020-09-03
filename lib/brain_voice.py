@@ -9,6 +9,7 @@ import logging
 import pymysql
 import json
 import pika
+import os
 
 # imports for the ML Chatbot
 import numpy as np
@@ -173,12 +174,17 @@ def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, en
         highest = predictions[np.argmax(predictions)]
         category = encoder.inverse_transform([np.argmax(predictions)]) 
         logger.debug("MLChatBot found " + str(highest) + " percent match to " + str(category))
-        if highest > .7:
+        if highest > .85:
             for i in chatdata['intents']:
                 if i['tag']==category:
                     response = np.random.choice(i['responses'])
         else:
             response = "Sorry, I dont have a suitable response to that"
+            logpath = ENVIRON["topdir"]
+            logpath  = os.path.join(logpath, 'static/MLModels/chatbot/unhandled.log')
+            f = open(logpath, "a")
+            f.write(text + "\n")
+            f.close()
 
         response = {'text': response, 'funct': '', 'next': ''}    
         result.append(response)
