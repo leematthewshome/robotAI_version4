@@ -47,6 +47,15 @@ def sendMessage(logger, ENVIRON, reply_to, body):
     return True
 
 
+# Build JSON format to be sent to the message queue
+#----------------------------------------------------------------------------------
+def buildMessage(logger, response):
+    result = {'action': 'chat', 'list': response}
+    body = json.dumps(result)
+    result = sendMessage(logger, ENVIRON, reply_to, body)
+    return body
+
+
 # ---------------------------------------------------------------------------------
 # Fetch a list of statements from the chat bot table
 #----------------------------------------------------------------------------------
@@ -174,20 +183,25 @@ def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, en
         highest = predictions[np.argmax(predictions)]
         category = encoder.inverse_transform([np.argmax(predictions)]) 
         logger.debug("MLChatBot found " + str(highest) + " percent match to " + str(category))
-        if highest > .85:
+        if highest > .75:
             for i in chatdata['intents']:
                 if i['tag']==category:
-                    response = np.random.choice(i['responses'])
+                    if len(i['context_set']) > 0:
+                        result = getChatPath(i['context_set'])
+                    else:
+                        response = np.random.choice(i['responses'])
+                        response = {'text': response, 'funct': '', 'next': ''}    
+                        result.append(response)
         else:
             response = "Sorry, I dont have a suitable response to that"
+            response = {'text': response, 'funct': '', 'next': ''}    
+            result.append(response)
             logpath = ENVIRON["topdir"]
             logpath  = os.path.join(logpath, 'static/MLModels/chatbot/unhandled.log')
             f = open(logpath, "a")
             f.write(text + "\n")
             f.close()
 
-        response = {'text': response, 'funct': '', 'next': ''}    
-        result.append(response)
         # return data to the client device that initiated the request 
         result = {'action': 'chat', 'list': result}
         body = json.dumps(result)
