@@ -2,7 +2,7 @@
         {"tag": "greeting",
          "patterns": ["Hi", "How are you", "Hello", "Good afternoon", "Good day", "Gday", "Hi there", "Good morning", "Greetings"],
          "responses": ["Hello, how are you", "Good daypart", "Hello there"],
-         "context_set": "GREET-0"
+         "context_set": "0-GREETA-0"
         },
         {"tag": "goodbye",
          "patterns": ["See you", "See you later", "Goodbye", "Bye", "Have a Good day","Catch you later"],
