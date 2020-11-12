@@ -12,6 +12,7 @@ import numpy as np
 import json
 import base64
 import pika
+from datetime import datetime
 
 #-------------------------------------------------------------------------------------------------------------------------
 # Object Detection Detector
@@ -82,12 +83,25 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
     if content == "image/jpg":
         logger.debug('Decode the content and save the file')
         imgbin = base64.b64decode(body)
-        # TODO Eventually need to save file as unique name and work out a way to clean up history
-        with open('captured.jpg', 'wb') as f_output:
+        
+        # Overwrite current image stored for client
+        # -------------------------------------------
+        filePath = os.path.join(ENVIRON['topdir'], 'static/motionImages', reply_to + '.jpg') 
+        with open(filePath, 'wb') as f_output:
             f_output.write(imgbin)
-        print("saved captured.jpg - need to save unique filename eventually")
+        
+        # Store image in history folder for client
+        # ----------------------------------------       
+        folder = os.path.join(ENVIRON['topdir'], 'static/motionImages/', reply_to) 
+        if not os.path.exists():
+            os.makedirs(folder)
+        filePath = os.path.join(folder, datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg') 
+        with open(filePath, 'wb') as f_output:
+            f_output.write(imgbin)
+        logger.debug("Saved image to " + filePath )
 
         # use Machine learning to determine if a person exists in the image
+        # -----------------------------------------------------------------
         logger.debug('Analysing the image using detectorAPI class')
         dt = detectorAPI(logger, objectModel, objectProto)
         result = dt.objectCount(imgbin)
