@@ -90,8 +90,8 @@ if __name__ == '__main__':
     ENVIRON["listen"] = True                                            # indicates pyaudio is free for hotword detection
     ENVIRON["topdir"] = topdir
     # these defaults will be updated from central on connect
-    ENVIRON["secureMode"] = False
-    ENVIRON["friendMode"] = False
+    ENVIRON["secureMode"] = config['CLIENT']['secureMode']
+    ENVIRON["friendMode"] = config['CLIENT']['friendMode']
     ENVIRON["talking"] = False			 
 
     # Create reference to our voice class
@@ -121,11 +121,11 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------
     # kick off motion sensor process based on enabled = TRUE
     # ---------------------------------------------------------------------------------------
-    if config['CLIENT']['motionSensor']:
+    if config['CLIENT']['motionSensor'] == "True":
         logger.info("Starting motion sensor")
         try:
-            from lib import client_motionSensor
-            m = Process(target=client_motionSensor.doSensor, args=(ENVIRON, ))
+            from lib import client_motionSensorPi
+            m = Process(target=client_motionSensorPi.doSensor, args=(ENVIRON, ))
             m.start()
         except:
             logger.error('Failed to start motion sensor')
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------
     # kick off voice sensor process based on enabled = TRUE
     # ---------------------------------------------------------------------------------------
-    if config['CLIENT']['voiceSensor']:
+    if config['CLIENT']['voiceSensor'] == "True":
         logger.info("Starting voice sensor")
         try:
             from lib import client_voiceSensor
