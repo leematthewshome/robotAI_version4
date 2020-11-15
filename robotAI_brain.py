@@ -128,8 +128,6 @@ if __name__ == '__main__':
     #-----------------------------------------------------
     ENVIRON = {}
     ENVIRON["topdir"] = topdir
-    ENVIRON["SecureMode"] = False
-    ENVIRON["Identify"] = True
     ENVIRON["queueSrvr"] = config['QUEUE']['queueSrvr']
     ENVIRON["queuePort"] = config['QUEUE']['queuePort']
     ENVIRON["queueUser"] = config['QUEUE']['queueUser']
