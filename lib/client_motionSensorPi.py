@@ -34,26 +34,21 @@ class motionLoop(object):
         self.logger = logging.getLogger(__name__)
         self.logger.level = logging.DEBUG
         #self.logger.level = logging.INFO
+        
+        # setup variables for motion detection process
+        #-------------------------------------------------
+        self.logger.debug("Setting motion detection delay...")
+        if ENVIRON["secureMode"]:
+            ENVIRON["motionDelay"] = 60
+        else:
+            ENVIRON["motionDelay"] = 60
+        ENVIRON["motionTime"] = datetime.datetime.now() + datetime.timedelta(seconds=ENVIRON["motionDelay"])
+        self.logger.debug("Motion detection delay set to " + str(ENVIRON["motionDelay"]))
+
         self.ENVIRON = ENVIRON
         credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
         self.parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
 
-        # setup variables for motion detection process
-        #-------------------------------------------------
-        self.framesCheck = 10                           
-        self.chatDelay = 300
-
-        self.setDelay()
-        self.logger.debug("Motion detection delay set to " + str(self.delay))
-
-
-    # Reset the delay counter based on mode
-    def setDelay(self):
-        if self.ENVIRON["secureMode"]:
-            self.delay = 20
-        else:
-            self.delay = 300
-            
 
     # Loop to keep checking every 5 seconds whether we should turn motion detection on
     #------------------------------------------------------------------------------------
@@ -64,8 +59,8 @@ class motionLoop(object):
                 self.detectPiCamera()
             else:
                 time.sleep(5)
-           
-            
+
+
     # Loop to detect motion using the camera
     #------------------------------------------------------------------------------------
     def detectPiCamera(self):
@@ -75,7 +70,7 @@ class motionLoop(object):
         camera.resolution = tuple(resolution) 
         camera.framerate = frameRate
         rawCapture = PiRGBArray(camera, size=tuple(resolution))
-        self.logger.debug("Warming up camera..."))
+        self.logger.debug("Warming up camera...")
         time.sleep(3)
         avg = None
         lastUploaded = datetime.datetime.now()
@@ -115,9 +110,6 @@ class motionLoop(object):
             for c in cnts:
                 if cv2.contourArea(c) < minArea:  
                     continue
-                # compute bounding box for the contour & draw it on the frame
-                (x, y, w, h) = cv2.boundingRect(c)
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 isMotion = True
                 
             # if motion was detected or upload time has expired
@@ -127,13 +119,13 @@ class motionLoop(object):
                 
                 #if motion detected check if we should take action
                 if isMotion:
-                    lastAlert = self.detectionEvent(lastAlert, camera, frame)
+                    self.detectionEvent(camera, frame)
                 
                 #if timeout then send image and check if we should exit
                 if (timestamp - lastUploaded).seconds >= uploadEvery:
                     self.logger.debug("Checking for stop indicator and uploading image")
                     lastUploaded = timestamp
-                    self.sendImage(frame)
+                    self.sendImage(frame, 'camera')
                     if self.ENVIRON["motion"] == False:
                         self.logger.debug("Time to stop detecting motion")
                         camera.clear()
@@ -146,39 +138,33 @@ class motionLoop(object):
 
     # Work out what we need to do when motion detected
     # ============================================================================================
-    def detectionEvent(self, lastAlert, camera, frame):
+    def detectionEvent(self, camera, frame):
         self.logger.debug('Motion detected. Determining course of action... ')
 
-        # Check lastAlert to see if we need to trigger a new Alert for the motion
-        curDTime = datetime.datetime.today()
-        diff = curDTime - lastAlert
-
-        # If we are already talking simply reset delay variales
+        # If we are already talking then no need to start speech again
         if self.ENVIRON["talking"]:
-            self.logger.debug('Motion detected but busy right now so just resetting counter. ')
-            # reset our delay counters
-            self.setDelay()            
+            self.logger.debug('Motion detected but already talking.... ')
             # TODO add code to later try to identify who we might be talking to
             ###################################################################
         else:  
             # check for either security or friendly mode and delay has expired
-            if (self.ENVIRON["secureMode"] or self.ENVIRON["friendMode"]) and (diff.seconds > self.delay):
-                lastAlert = curDTime
+            if (self.ENVIRON["secureMode"] or self.ENVIRON["friendMode"]) and (self.ENVIRON["motionTime"] < datetime.datetime.now()):
                 self.logger.debug('Motion detected and timer has expired so taking action. ')
-                self.sendImage(frame)
+                self.sendImage(frame, 'motion')
+                time.sleep(1)
             else:
-                self.logger.debug("Motion detected but %s seconds delay remains" % str(self.delay - diff.seconds)  )     
-                pass        
+                diff = self.ENVIRON["motionTime"] - datetime.datetime.now()
+                self.logger.debug("Motion detected but %s seconds delay remains" % str(diff.seconds))
+                pass
                 
-        return lastAlert
-        
+
         
     # Send image file to server
     # ============================================================================================
-    def sendImage(self, frame):
+    def sendImage(self, frame, requestType):
         retval, buffer = cv2.imencode('.jpg', frame)
         jpgb64 = base64.b64encode(buffer)
-        properties = pika.BasicProperties(app_id='motion', content_type='image/jpg', reply_to=self.ENVIRON["clientName"])
+        properties = pika.BasicProperties(app_id=requestType, content_type='image/jpg', reply_to=self.ENVIRON["clientName"])
         try:
             connection = pika.BlockingConnection(self.parameters)
             channel = connection.channel()
