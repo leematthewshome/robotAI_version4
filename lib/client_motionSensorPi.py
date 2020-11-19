@@ -25,6 +25,7 @@ frameRate = 15
 minArea = 5000
 uploadEvery = 3 #seconds
 deltaThresh = 5
+vidSeconds = 5
 
 
 class motionLoop(object):
@@ -150,8 +151,15 @@ class motionLoop(object):
             # check for either security or friendly mode and delay has expired
             if (self.ENVIRON["secureMode"] or self.ENVIRON["friendMode"]) and (self.ENVIRON["motionTime"] < datetime.datetime.now()):
                 self.logger.debug('Motion detected and timer has expired so taking action. ')
+                # send image to brain to check if person detected
                 self.sendImage(frame, 'motion')
-                time.sleep(1)
+                # record X seconds of video and synch to cloud anyway
+                filepath = os.path.join('/home/pi/robotAI4/static/motionImages/', datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.h264') 
+                camera.start_recording(filepath)
+                time.sleep(vidSeconds)
+                camera.stop_recording()
+                # TODO add code to synch video files to the cloud and delete locally
+                ###################################################################
             else:
                 diff = self.ENVIRON["motionTime"] - datetime.datetime.now()
                 self.logger.debug("Motion detected but %s seconds delay remains" % str(diff.seconds))

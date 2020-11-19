@@ -48,7 +48,6 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
         if ENVIRON["talking"]:
             logger.debug("We are already talking on this device, so ignoring motion for now")
         else:
-            print(ENVIRON)
             if ENVIRON["secureMode"] =="True":
                 body = '{"action": "getChat", "chatItem": "SECURITY-0"}'
             elif ENVIRON["friendMode"]=="True":

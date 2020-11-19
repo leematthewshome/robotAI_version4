@@ -19,17 +19,17 @@ from datetime import datetime
 #-------------------------------------------------------------------------------------------------------------------------
 class detectorAPI:
 
-    def __init__(self, logger, objectModel, objectProto):
+    def __init__(self, logger, topDir):
         self.logger = logger
         # filepath parameters parameters
-        self.file_path = os.path.dirname(os.path.realpath(__file__))
-        self.model_path = os.path.join(self.file_path, "MLModels/MobileNetSSD_deploy.caffemodel")
-        self.proto_path = os.path.join(self.file_path, "MLModels/MobileNetSSD_deploy.prototxt.txt")
+        self.model_path = os.path.join(topDir, "static/MLModels/object/MobileNetSSD_deploy.caffemodel")
+        self.proto_path = os.path.join(topDir, "static/MLModels/object/MobileNetSSD_deploy.prototxt.txt")
         self.conf_cutoff = 0.5
 
         # initialize the list of class labels for detection
         self.CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
                 "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+        print("loading dnn")
         self.net = cv2.dnn.readNetFromCaffe(self.proto_path, self.model_path)
 
 
@@ -38,8 +38,10 @@ class detectorAPI:
         #frame = imutils.resize(frame, width=400)
         # grab the frame dimensions and convert it to a blob
         #(h, w) = frame.shape[:2]
+        #print("converting to blob")
         blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 0.007843, (300, 300), 127.5)
         # pass the blob through the network and obtain the detections and predictions
+        #print("getting objects")
         self.net.setInput(blob)
         detections = self.net.forward()
 
@@ -66,8 +68,7 @@ class detectorAPI:
 # Function called by robotAI_brain for this set of logic
 #---------------------------------------------------------------------------
 def doLogic(ENVIRON, msgQueue, content, reply_to, body):
-    objectModel = "MLModels/MobileNetSSD_deploy.caffemodel"
-    objectProto = "MLModels/MobileNetSSD_deploy.prototxt.txt"
+
     debugOn = True
 
     # setup logging using the python logging library
@@ -93,7 +94,7 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
         # Store image in history folder for client
         # ----------------------------------------       
         folder = os.path.join(ENVIRON['topdir'], 'static/motionImages/', reply_to) 
-        if not os.path.exists():
+        if not os.path.exists(folder):
             os.makedirs(folder)
         filePath = os.path.join(folder, datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg') 
         with open(filePath, 'wb') as f_output:
@@ -103,7 +104,8 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
         # use Machine learning to determine if a person exists in the image
         # -----------------------------------------------------------------
         logger.debug('Analysing the image using detectorAPI class')
-        dt = detectorAPI(logger, objectModel, objectProto)
+        dt = detectorAPI(logger, ENVIRON['topdir'])
+        logger.debug('Instantiated detectorAPI class, running objectCount...')
         result = dt.objectCount(imgbin)
         # respond to the client device that submitted the message
         body = json.dumps(result)
@@ -113,5 +115,6 @@ def doLogic(ENVIRON, msgQueue, content, reply_to, body):
         channel1.queue_declare(reply_to)
         properties = pika.BasicProperties(app_id='motion', content_type='application/json', reply_to='Central')
         channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
+
 
 
