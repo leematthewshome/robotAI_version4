@@ -12,6 +12,9 @@ import socket
 import logging
 import os
 import configparser
+import base64
+from multiprocessing import Process
+
 
 # import python modules for chatbot
 import json 
@@ -93,7 +96,7 @@ def callback(ch, method, properties, body):
     elif app_id == 'camera':
         # For camera events just overwrite the latest image
         imgbin = base64.b64decode(body)
-        filePath = os.path.join(topdir, 'static/motionImages', reply_to + '.jpg') 
+        filePath = os.path.join(topdir, 'static/web', reply_to + '.jpg') 
         with open(filePath, 'wb') as f_output:
             f_output.write(imgbin)
         logger.debug("Saved image to " + filePath )
@@ -106,8 +109,7 @@ def callback(ch, method, properties, body):
         import lib.brain_voice as voice
         voice.doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, encoder)
     else:
-        logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)
-    
+        logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)    
 
 
 #---------------------------------------------------------
@@ -128,6 +130,8 @@ if __name__ == '__main__':
     #-----------------------------------------------------
     ENVIRON = {}
     ENVIRON["topdir"] = topdir
+    ENVIRON["SecureMode"] = False
+    ENVIRON["Identify"] = True
     ENVIRON["queueSrvr"] = config['QUEUE']['queueSrvr']
     ENVIRON["queuePort"] = config['QUEUE']['queuePort']
     ENVIRON["queueUser"] = config['QUEUE']['queueUser']
@@ -156,6 +160,19 @@ if __name__ == '__main__':
         logger.error('Unable to connect to Message Queue ' + config['QUEUE']['queueSrvr'])
 
 
+    # ---------------------------------------------------------------------------------------
+    # kick off website for cam feeds
+    # ---------------------------------------------------------------------------------------
+    if config['BRAIN']['camFeedsWeb'] == 'True':
+        logger.info("Starting web server for camera feeds")
+        try:
+            import camFeeds
+            m = Process(target=camFeeds.runWeb, args=(ENVIRON,))
+            m.start()
+        except:
+            logger.error('Failed to start flask server for camera feeds')
+   
+   
     # If successful start listening on Central channel 
     #------------------------------------------------------
     if isQueue:
@@ -167,4 +184,5 @@ if __name__ == '__main__':
         except:
             logger.error('Failed to start listening on channel ' + config['QUEUE']['brainQueue'])
     
-   
+
+
