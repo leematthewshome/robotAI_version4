@@ -44,3 +44,5 @@ sudo pip3 install PyMySQL
 sudo pip3 install --upgrade tensorflow
 
 sudo pip3 install -U scikit-learn
+
+sudo pip3 install flask
