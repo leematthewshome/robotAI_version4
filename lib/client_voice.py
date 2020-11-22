@@ -156,7 +156,7 @@ class voice():
         rec.seek(0)
         self.play(self.beep_lo)    
         self.ENVIRON["listen"] = True
-        self.logger.debug("about to transcribe")
+        self.logger.debug("About to transcribe the recorded data")
         
         # only transcribe if we need to        
         if stt:

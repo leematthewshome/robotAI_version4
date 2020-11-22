@@ -20,6 +20,10 @@ import json
 from google.cloud import speech_v1 as speech
 from google.protobuf.json_format import MessageToJson
 
+# Toggle settings for respeaker or standard Mic
+#==============================================
+respeaker = True
+#==============================================
 
 # Insert the correct values from your Google project
 json_file = 'my-home-ai-project-c6ff7abb0b1a.json'
@@ -58,22 +62,26 @@ class stt():
     def listen(self, myFile):
         self.logger.debug("Running stt.listen function ")
         
-        _audio = pyaudio.PyAudio()
         RATE = 16000
         CHUNK = 1024
         LISTEN_TIME = 10
+        if respeaker:
+            CHANNELS = 2
+        else:
+            CHANNELS = 1
 
         # Set threshold to the current average background noise
         # TODO if voiceSensor not running we need another way to calc THRESHOLD
         try:
             THRESHOLD = self.ENVIRON["avg_noise"] 
         except:
-            THRESHOLD = 100
+            THRESHOLD = 2000
 
         # prepare recording stream
+        p = pyaudio.PyAudio()
         self.logger.debug("Opening pyaudio recording stream")
-        stream = _audio.open(format=pyaudio.paInt16,
-                                  channels=1,
+        stream = p.open(format=pyaudio.paInt16,
+                                  channels=CHANNELS,
                                   rate=RATE,
                                   input=True,
                                   frames_per_buffer=CHUNK)
@@ -92,6 +100,7 @@ class stt():
             average = sum(lastN) / float(len(lastN))
 
             #If average sound level is below cutoff then we have silence, so stop listening
+            print('AVG RECORDING LEVEL IS ' + str(average))
             if average < THRESHOLD:
                 break
 
@@ -103,7 +112,7 @@ class stt():
         # Save the recording to the file handle only if we were given one
         if myFile:
             wav_fp = wave.open(myFile, 'wb')
-            wav_fp.setnchannels(1)
+            wav_fp.setnchannels(CHANNELS)
             wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
             wav_fp.setframerate(RATE)
             wav_fp.writeframes(b''.join(frames))

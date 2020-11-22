@@ -158,13 +158,18 @@ if __name__ == "__main__":
 
     #set placeholder value for our message queue
     ENVIRON = {}
+    ENVIRON["clientName"] = clientName                                      #the name of our client device, eg. FrontDoor
     ENVIRON["topdir"] = '/home/lee/Downloads/robotAI4'
     ENVIRON["listen"] = True
+    ENVIRON["motion"] = True                                                #flags whether to run motion sensor
     ENVIRON["queueSrvr"] = queueSrvr
     ENVIRON["queuePort"] = queuePort
     ENVIRON["queueUser"] = queueUser
     ENVIRON["queuePass"] = queuePass
-    ENVIRON["clientName"] = clientName                                  #the name assigned to our client device, eg. FrontDoor
+    ENVIRON["secureMode"] = True
+    ENVIRON["friendMode"] = True
+    ENVIRON["talking"] = False
+
 
     # Create reference to our voice class
     import client_voice
