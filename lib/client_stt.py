@@ -122,14 +122,40 @@ class stt():
         return myFile      
         
 
+    def convertMono(self, stereo):
+        monofile = os.path.join(ENVIRON["topdir"], 'static/audio/monofile.wav')
+        print('step 1')
+        mono = wave.open(monofile, 'wb')
+        print('step 2')
+        mono.setparams(stereo.getparams())
+        print('step 3')
+        mono.setnchannels(1)
+        print('step 4')
+        mono.writeframes(audioop.tomono(stereo.readframes(float('inf')), stereo.getsampwidth(), 1, 1))
+        print('step 5')
+        mono.close()
+        return monofile
+
 
     # Submit recording to Google API to convert to text 
     #---------------------------------------------------------------
     def transcribe(self, fp):
-        #transcribed = []
         transcribed = ''
 
-        data = fp.read()
+        #convert stereo recording to mono file if required
+        stereo = wave.open(fp, 'rb')
+        if stereo.getnchannels() > 1:
+            self.logger.debug("Recording is stereo, so converting to mono ")
+            monofile = self.convertMono(stereo)
+            self.logger.debug("Mono file is " + monofile)
+            f=open(monofile, 'rb')  
+            data = f.read()
+            f.close()
+        else:
+            data = fp.read()
+        stereo.close()
+        
+        self.logger.debug("Converting to base64 and utf-8 ")
         speech_content_bytes = base64.b64encode(data)
         speech_content = speech_content_bytes.decode('utf-8')
 
@@ -139,6 +165,7 @@ class stt():
         config = {'language_code': 'en-US'}
         audio = {'content': data}
 
+        self.logger.debug("Sending details to Google STT API ")
         client = speech.SpeechClient()
         response = client.recognize(config, audio)
         result_json = MessageToJson(response)
@@ -160,14 +187,17 @@ class stt():
 # Testing script that is executed if code run directly
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
+    import tempfile
     ENVIRON = {}
     ENVIRON["avg_noise"] = 1
-    ENVIRON["topdir"] = '/home/lee/Downloads/robotAI4'
+    ENVIRON["topdir"] = '/home/pi/robotAI4'
 
     mystt = stt(ENVIRON)
-    result = mystt.listen(True)
-    print(result)
-
+    tmpFile = tempfile.SpooledTemporaryFile(mode='w+b')
+    rec = mystt.listen(tmpFile)
+    rec.seek(0)
+    response = mystt.transcribe(tmpFile)
+    print(response)
 
 
 

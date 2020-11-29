@@ -162,7 +162,7 @@ class motionLoop(object):
                 ###################################################################
             else:
                 diff = self.ENVIRON["motionTime"] - datetime.datetime.now()
-                self.logger.debug("Motion detected but %s seconds delay remains" % str(diff.seconds))
+                self.logger.debug("Motion detected but taking no action. %s seconds delay remains" % str(diff.seconds))
                 pass
                 
 
