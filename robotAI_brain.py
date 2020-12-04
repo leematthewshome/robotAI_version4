@@ -69,6 +69,41 @@ tokenizer.fit_on_texts(training_sentences)
 
 
 #---------------------------------------------------------
+# Check for chat text database and create if required
+#---------------------------------------------------------
+import sqlite3
+import csv
+
+dbpath = os.path.join(topdir, 'static/db/robotAI.db')
+csvpath = os.path.join(topdir, 'static/db/ChatText.csv')
+if not os.path.isfile(dbpath):
+	logger.warning("Warning: No ChatText DB found. Creating now... ")
+    conn = sqlite3.connect(dbpath)
+    # if not exists then database will be empty, so create tables
+    cur = conn.cursor() 
+    cur.execute("""CREATE TABLE ChatText (category VARCHAR(32) NOT NULL, item INTEGER NOT NULL, text VARCHAR(255), funct VARCHAR(255), next VARCHAR(255))""")
+    cur.execute("""CREATE INDEX ChatText_cat ON ChatText(category)""")
+    cur.execute("""CREATE INDEX ChatText_catitem ON ChatText(category, item)""")
+    # now load up the data from the CSV file (lets assume one exists)
+    with open(csvpath, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            data = (row['category'], row['item'], row['text'], row['funct'], row['next'])
+            cur.execute("INSERT INTO ChatText VALUES (?,?,?,?,?);", data)
+    conn.commit()
+	logger.warning("ChatText DB was successfully created from CSV. ")
+else:
+    conn = sqlite3.connect(dbpath)
+    cur = conn.cursor() 
+    query = """SELECT * from ChatText"""
+    cur.execute(query)
+    records = cur.fetchall()
+	logger.debug("ChatText DB found. Total rows in ChatText table is: ", len(records))
+
+conn.close()
+
+
+#---------------------------------------------------------
 # Various functions
 #---------------------------------------------------------
 
@@ -184,5 +219,4 @@ if __name__ == '__main__':
         except:
             logger.error('Failed to start listening on channel ' + config['QUEUE']['brainQueue'])
     
-
 
