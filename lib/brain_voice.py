@@ -41,6 +41,7 @@ def sendMessage(logger, ENVIRON, reply_to, body):
         properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["brainQueue"])
         channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
         connection.close()
+        print(body)
     except:
         logger.error('There was an error sending the message to the queue')
         return False
