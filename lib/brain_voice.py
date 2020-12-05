@@ -6,7 +6,7 @@ Author: Lee Matthews 2020
 ===============================================================================================
 """
 import logging
-import pymysql
+import sqlite3
 import json
 import pika
 import os
@@ -17,13 +17,10 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # create connection to database
 # ----------------------------------------------------------------------------------
-def createConn():
+def createConn(topdir):
     try:
-        conn = pymysql.connect(
-            db='robotAI',
-            user='root',
-            passwd='Password123',
-            host='localhost')
+        dbpath = os.path.join(topdir, 'static/db/robotAI.db')
+        conn = sqlite3.connect(dbpath)
     except:
         return None
     return conn
@@ -41,7 +38,6 @@ def sendMessage(logger, ENVIRON, reply_to, body):
         properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["brainQueue"])
         channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
         connection.close()
-        print(body)
     except:
         logger.error('There was an error sending the message to the queue')
         return False
@@ -82,7 +78,7 @@ def getChatPath(chatid='0-GREETA-0'):
         if str(iItm) != '0':
             SQL += " AND Item = " + str(iItm)
         else:
-            SQL += " ORDER BY RAND() LIMIT 1 ;"
+            SQL += " ORDER BY RANDOM() LIMIT 1 ;"
         return SQL
 
     # recursively loop through database to get path
@@ -94,7 +90,7 @@ def getChatPath(chatid='0-GREETA-0'):
         iItm = row[2]
 
         # create SQL query (add multiple languages later)
-        SQL = buildSQL('robotAI.ChatText_en', sCat, iItm)
+        SQL = buildSQL('ChatText', sCat, iItm)
         try:
             cur.execute(SQL)
             list = cur.fetchall()
@@ -211,7 +207,6 @@ def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, en
     else:
         # catch all if we didnt expect the action or was blank
         logger.warning('The action value of ' + action + ' has no code to handle it.')
-
 
 
 
