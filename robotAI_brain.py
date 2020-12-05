@@ -69,48 +69,34 @@ tokenizer.fit_on_texts(training_sentences)
 
 
 #---------------------------------------------------------
-# Check for chat text database and create if required
+# Various functions
 #---------------------------------------------------------
-import sqlite3
-import csv
 
-dbpath = os.path.join(topdir, 'static/db/robotAI.db')
-csvpath = os.path.join(topdir, 'static/db/ChatText.csv')
-if not os.path.isfile(dbpath):
-	logger.warning("Warning: No ChatText DB found. Creating now... ")
+# build chat text database if required
+#---------------------------------------------------------
+def buildDB(logger, topdir):
+    logger.warning("Warning: No ChatText DB found. Creating now... ")
+    csvpath = os.path.join(topdir, 'static/db/ChatText.csv')
     conn = sqlite3.connect(dbpath)
-    # if not exists then database will be empty, so create tables
+    # now create tables and populate from CSV
     cur = conn.cursor() 
     cur.execute("""CREATE TABLE ChatText (category VARCHAR(32) NOT NULL, item INTEGER NOT NULL, text VARCHAR(255), funct VARCHAR(255), next VARCHAR(255))""")
     cur.execute("""CREATE INDEX ChatText_cat ON ChatText(category)""")
     cur.execute("""CREATE INDEX ChatText_catitem ON ChatText(category, item)""")
-    # now load up the data from the CSV file (lets assume one exists)
     with open(csvpath, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             data = (row['category'], row['item'], row['text'], row['funct'], row['next'])
             cur.execute("INSERT INTO ChatText VALUES (?,?,?,?,?);", data)
     conn.commit()
-	logger.warning("ChatText DB was successfully created from CSV. ")
-else:
-    conn = sqlite3.connect(dbpath)
-    cur = conn.cursor() 
-    query = """SELECT * from ChatText"""
-    cur.execute(query)
-    records = cur.fetchall()
-	logger.debug("ChatText DB found. Total rows in ChatText table is: ", len(records))
+    logger.warning("ChatText DB was successfully created from CSV. ")
+    conn.close()
 
-conn.close()
-
-
-#---------------------------------------------------------
-# Various functions
-#---------------------------------------------------------
 
 # Function executed when queue message received
 # -------------------------------------------------------
 def callback(ch, method, properties, body):
-    logger.debug("Callback function triggered by message")
+    #logger.debug("Callback function triggered by message")
     try:
         app_id = properties.app_id
         content = properties.content_type
@@ -134,7 +120,7 @@ def callback(ch, method, properties, body):
         filePath = os.path.join(topdir, 'static/web', reply_to + '.jpg') 
         with open(filePath, 'wb') as f_output:
             f_output.write(imgbin)
-        logger.debug("Saved image to " + filePath )
+        #logger.debug("Saved image to " + filePath )
     elif app_id == 'motion':
         # For motion detection events check the image for any humans
         import lib.brain_motion as motion
@@ -161,6 +147,15 @@ if __name__ == '__main__':
     else:
         logger.level = logging.INFO
 
+    # Check for configuration database
+    #-----------------------------------------------------
+    dbpath = os.path.join(topdir, 'static/db/robotAI.db')
+    if not os.path.isfile(dbpath):
+        import sqlite3
+        import csv
+        buildDB(logger, topdir)
+    
+    
     # Setup Environment data to be shared with clients
     #-----------------------------------------------------
     ENVIRON = {}
@@ -219,4 +214,5 @@ if __name__ == '__main__':
         except:
             logger.error('Failed to start listening on channel ' + config['QUEUE']['brainQueue'])
     
+
 
