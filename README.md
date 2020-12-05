@@ -1,5 +1,5 @@
 # robotAI_version4
-This is the latest version of my AI / Automation platform. Designed this time to allow for distributed computing, via a central message queue and 'brain' to handle heavy computing requirements like machine learning and computer vision.
+This is the latest version of my AI / Automation platform. Designed this time to allow for distributed computing, via a central message queue and 'brain' to handle heavy computing requirements like machine learning and computer vision. The series of videos at the following link discusses the architecture and how to install: https://www.youtube.com/watch?v=vhBliXm4O28&list=PLuXBZmwbLVYLWkmod24M9E2TRY0Jn-gsN
 
 Installation for both Client & Brain Devices
 --------------------------------------------
