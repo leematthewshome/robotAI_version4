@@ -15,10 +15,10 @@ STMNT,2,I am planning on staying inside today. I like it inside.,,
 STMNT,3,I am feeling happy. I like being a robot.,,
 STMNT,3,I am feeling tired. I might charge my batteries.,,
 STMNT,4,Have a nice day today.,,
-GREET1,1,Hello.,,0-GREETB-0
-GREET1,2,Hello there.,,0-GREETB-0
-GREET1,3,Good dayPart.,,0-GREETB-0
-GREET1,4,Hi there.,,0-GREETB-0
+GREET1,1,Hello.,,0-GREET2-0
+GREET1,2,Hello there.,,0-GREET2-0
+GREET1,3,Good dayPart.,,0-GREET2-0
+GREET1,4,Hi there.,,0-GREET2-0
 GREET2,1,It is a lovely day. Although every day seems nice to an artificial intelligence.,,0-ENJOY-0
 GREET2,2,My name is Meebo. I am an artificial intelligence and I take care of this house.,,0-ENJOY-0
 GREET2,3,It is a lovely day. At least I think so. I am not yet programmed to tell the difference.,,0-ENJOY-2
