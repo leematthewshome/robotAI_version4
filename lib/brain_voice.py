@@ -56,21 +56,21 @@ def buildMessage(logger, response):
 # ---------------------------------------------------------------------------------
 # Fetch a list of statements from the chat bot table
 #----------------------------------------------------------------------------------
-def getChatPath(chatid='0-GREETA-0'):
+def getChatPath(topdir, logger, chatid='0-GREETA-0'):
     # make 2 part chat IDs match the way 'next' column in DB formatted
     arr = chatid.split('-')
     if len(arr) == 2:
         chatid = '0-' + chatid
-    print('Running function getChatPath with chatid: ' + chatid)
+    logger.debug('Running function getChatPath with chatid: ' + chatid)
 
     # connect to database and check for valid subscription
-    conn = createConn()
+    conn = createConn(topdir)
     if conn is None:
-        print('Could not connect to database. Exiting function.')
+        logger.error('Could not connect to database. Exiting function.')
         return {}
     else:
         cur = conn.cursor()
-        print('Connection to DB established and ready with cursor.')
+        logger.debug('Connection to DB established and ready with cursor.')
 
     # function to build the SQL stmnt
     def buildSQL(table, sCat, iItm):
@@ -128,6 +128,7 @@ def getChatPath(chatid='0-GREETA-0'):
 def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, encoder):
     debugOn = True
     action = ""
+    topdir = ENVIRON['topdir']
 
     # setup logging using the python logging library
     #-----------------------------------------------------
@@ -161,7 +162,7 @@ def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, en
         # need to fetch the relevant chat text requested
         chatid = data["chatItem"]
         logger.debug('Calling getChatPath function')
-        result = getChatPath(chatid)
+        result = getChatPath(topdir, logger, chatid)
         # return data to the client device that initiated the request 
         result = {'action': 'chat', 'list': result}
         body = json.dumps(result)
@@ -184,7 +185,7 @@ def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, en
             for i in chatdata['intents']:
                 if i['tag']==category:
                     if len(i['context_set']) > 0:
-                        result = getChatPath(i['context_set'])
+                        result = getChatPath(topdir, logger, i['context_set'])
                     else:
                         response = np.random.choice(i['responses'])
                         response = {'text': response, 'funct': '', 'next': ''}    
@@ -193,8 +194,7 @@ def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, en
             response = "Sorry, I dont have a suitable response to that"
             response = {'text': response, 'funct': '', 'next': ''}    
             result.append(response)
-            logpath = ENVIRON["topdir"]
-            logpath  = os.path.join(logpath, 'static/MLModels/chatbot/unhandled.log')
+            logpath  = os.path.join(topdir, 'static/MLModels/chatbot/unhandled.log')
             f = open(logpath, "a")
             f.write(text + "\n")
             f.close()
@@ -207,6 +207,7 @@ def doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, en
     else:
         # catch all if we didnt expect the action or was blank
         logger.warning('The action value of ' + action + ' has no code to handle it.')
+
 
 
 
