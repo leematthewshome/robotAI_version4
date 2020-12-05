@@ -9,13 +9,34 @@ GREETA,4,Good day.,,0-GREETB-0
 GREETB,1,How are you today?,pauseListen,0-STMNT-0
 GREETB,2,What are you doing?,pauseListen,0-STMNT-0
 GREETB,3,How are things going with you?,pauseListen,0-STMNT-0
-GREETB,4,How are you today?,pauseListen,0-QUESTN-0
-STMNT,1,I am feeling very good today.,,0-QUESTN-0
-STMNT,2,I am planning on staying inside today. I like it inside.,,0-QUESTN-0
-STMNT,3,I am feeling happy. I like being a robot.,,0-QUESTN-0
-STMNT,3,I am feeling tired. I might stay home today and charge my batteries.,,0-QUESTN-0
+GREETB,4,How are you today?,pauseListen,0-STMNT-0
+STMNT,1,I am feeling very good today.,,
+STMNT,2,I am planning on staying inside today. I like it inside.,,
+STMNT,3,I am feeling happy. I like being a robot.,,
+STMNT,3,I am feeling tired. I might charge my batteries.,,
 STMNT,4,Have a nice day today.,,
-QUESTN,1,Would you like to hear a joke?,yesNo,YES-JOKE1-0|NO-FINISH-0
+GREET1,1,Hello.,,0-GREETB-0
+GREET1,2,Hello there.,,0-GREETB-0
+GREET1,3,Good dayPart.,,0-GREETB-0
+GREET1,4,Hi there.,,0-GREETB-0
+GREET2,1,It is a lovely day. Although every day seems nice to an artificial intelligence.,,0-ENJOY-0
+GREET2,2,My name is Meebo. I am an artificial intelligence and I take care of this house.,,0-ENJOY-0
+GREET2,3,It is a lovely day. At least I think so. I am not yet programmed to tell the difference.,,0-ENJOY-2
+GREET2,4,If you are walking a dog, dont forget to pick up it's poop. Sometimes I wish I was a dog.,,0-GREET3-2
+GREET2,5,I hope I didnt scare you. My name is Meebo and I am an artificial intelligence.,,0-GREET3-0
+GREET2,6,My name is Meebo and I am your friendly neighborhood artificial intelligence.,,0-GREET3-0
+GREET2,7,I am your friendly neighborhood A.I. My name is Meebo.,,0-GREET3-0
+GREET2,6,My name is Meebo and I am an A.I. That stands for Artificial Intelligence.,,0-GREET3-0
+GREET2,6,My name is Meebo. I am an Artificial Intelligence. I guess I must be intelligent. Or artifical. Probably both.,,0-GREET3-0
+GREET3,1,I just wanted to say hello.,,0-ENJOY-0
+GREET3,2,Anyway, I just wanted to say Hi.,,0-ENJOY-0
+GREET3,2,Anyway, I just wanted to say Hi.,,0-ENJOY-0
+ENJOY,1,Have a nice day.,,
+ENJOY,2,Enjoy your day.,,
+ENJOY,3,Have a nice day. Perhaps I will see you again some time.,,
+ENJOY,4,Enjoy your day. Maybe we will meet again.,,
+ENJOY,5,It was nice to meet you. Enjoy your day.,,
+ENJOY,6,It was nice to meet you. See you next time.,,
 FINISH,1,OK.,,
 JOKE1,1,What is brown and sticky?,pauseListen,0-JOKE2-1
 JOKE2,1,A stick.,,0-JOKE3-0
@@ -33,41 +54,25 @@ JOKE1,7,Why is it hard to play cards in the jungle?,pauseListen,0-JOKE2-7
 JOKE2,7,Because there are a lot of cheetahs there.,,0-JOKE3-0
 JOKE1,8,Why don't skeletons go sky diving?,pauseListen,0-JOKE2-8
 JOKE2,8,Because they dont have the guts.,,0-JOKE3-0
-JOKE3,1,Ha Ha Ha. I like that one. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-FINISH-0
-JOKE3,2,I hope you liked that one. Can I tell you another one?,yesNo,YES-JOKE5-0|NO-JOKE4-0
-JOKE3,3,Ha Ha Ha. I like that one. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-JOKE4-0
-JOKE3,4,Ha Ha Ha. That one always cracks me up.,,
-JOKE3,5,Ha Ha Ha. That one is very funny.,,
-JOKE3,6,I have lots more where that came from. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-JOKE4-0
-JOKE3,7,I read that one in a christmas cracker. Can I tell you another one?,yesNo,YES-JOKE5-0|NO-JOKE4-0
-JOKE4,1,"If you think my jokes are not funny,  then blame the internet. That is where I get them from.",,
-JOKE4,2,OK. I will try to find some better ones for next time.,,
-JOKE4,3,OK. Maybe that was not so funny after all.,,
-JOKE4,4,OK. Let me know if you need anything else.,,
-JOKE5,1,OK. How about this one....,,0-JOKE1-0
-JOKE5,2,Great. How about this....,,0-JOKE1-0
-JOKE5,3,OK then...,,0-JOKE1-0
-JOKE5,4,Try this one then...,,0-JOKE1-0
-JOKE5,5,You must like my jokes. OK then...,,0-JOKE1-0
 JOKE1,9,A horse walked into a bar. ,,0-JOKE2-9
 JOKE2,9,"The bartender looked at him and said...Hey Buddy, what is with the long face?",,0-JOKE3-0
 JOKE2,10,I will meet you at the corner!,,0-JOKE3-0
 JOKE1,10,What did one wall say to the other wall?,pauseListen,0-JOKE2-10
 JOKE1,11,What do you call a bear with no teeth?,pauseListen,0-JOKE2-11
-JOKE1,12,Why are elephants so wrinkled?,pauseListen,0-JOKE2-11
-JOKE1,13,Why are ghosts bad liars?,pauseListen,0-JOKE2-13
-JOKE1,14,What do you call a fly without wings?,pauseListen,0-JOKE2-14
-JOKE1,15,Why do bees have sticky hair?,pauseListen,0-JOKE2-15
-JOKE1,16,What do you get when you cross a snowman with a vampire?,pauseListen,0-JOKE2-16
-JOKE1,17,What has four wheels and flies?,pauseListen,0-JOKE2-17
-JOKE1,18,Why did the man run around his bed?,pauseListen,0-JOKE2-18
 JOKE2,11,A gummy bear!,,0-JOKE3-0
+JOKE1,12,Why are elephants so wrinkled?,pauseListen,0-JOKE2-11
 JOKE2,12,Because they take too long to iron!,,0-JOKE3-0
-JOKE2,14,Because you can see right through them!,,0-JOKE3-0
-JOKE2,15,Because they use honey combs!,, 0-JOKE3-0
+JOKE1,13,Why are ghosts bad liars?,pauseListen,0-JOKE2-13
+JOKE2,13,Because you can see right through them!,,0-JOKE3-0
+JOKE1,14,What do you call a fly without wings?,pauseListen,0-JOKE2-14
 JOKE2,14,A walk!,,0-JOKE3-0
+JOKE1,15,Why do bees have sticky hair?,pauseListen,0-JOKE2-15
+JOKE2,15,Because they use honey combs!,, 0-JOKE3-0
+JOKE1,16,What do you get when you cross a snowman with a vampire?,pauseListen,0-JOKE2-16
 JOKE2,16,Frostbite!,,0-JOKE3-0
+JOKE1,17,What has four wheels and flies?,pauseListen,0-JOKE2-17
 JOKE2,17,A garbage truck!,,0-JOKE3-0
+JOKE1,18,Why did the man run around his bed?,pauseListen,0-JOKE2-18
 JOKE2,18,Because he was trying to catch up on his sleep!,,0-JOKE3-0
 JOKE1,19,Why dont bananas get lonely?,pauseListen ,0-JOKE2-19
 JOKE2,19,Because they hang around in bunches.,,0-JOKE3-0
@@ -189,8 +194,28 @@ JOKE1,77,I made a belt out of watches.,,0-JOKE2-77
 JOKE2,77,It was a complete waste of time.,,0-JOKE3-0
 JOKE1,78,What did the number zero say to the number eight.,pauseListen ,0-JOKE2-78
 JOKE2,78,I think your belt is too tight.,,0-JOKE3-0
+
+JOKE3,1,Ha Ha Ha. I like that one. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-FINISH-0
+JOKE3,2,I hope you liked that one. Can I tell you another one?,yesNo,YES-JOKE5-0|NO-JOKE4-0
+JOKE3,3,Ha Ha Ha. I like that one. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-JOKE4-0
+JOKE3,4,Ha Ha Ha. That one always cracks me up.,,
+JOKE3,5,Ha Ha Ha. That one is very funny.,,
+JOKE3,6,I have lots more where that came from. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-JOKE4-0
+JOKE3,7,I read that one in a christmas cracker. Can I tell you another one?,yesNo,YES-JOKE5-0|NO-JOKE4-0
+
+JOKE4,1,"If you think my jokes are not funny,  then blame the internet. That is where I get them from.",,
+JOKE4,2,OK. I will try to find some better ones for next time.,,
+JOKE4,3,OK. Maybe that was not so funny after all.,,
+JOKE4,4,OK. Let me know if you need anything else.,,
+JOKE5,1,OK. How about this one....,,0-JOKE1-0
+JOKE5,2,Great. How about this....,,0-JOKE1-0
+JOKE5,3,OK then...,,0-JOKE1-0
+JOKE5,4,Try this one then...,,0-JOKE1-0
+JOKE5,5,You must like my jokes. OK then...,,0-JOKE1-0
+
 SECURITY,1,This home is monitored with This Robot A.I. The owners have been notified and you are being filmed. You should leave now.,,
 SECURITY,2,This home is securely monitored. The owners have been notified and you are being filmed. You should leave now.,,
+
 SECURE1,11,What are you doing here.,,0-SECURE2-0
 SECURE1,12,Can I help you?,,0-SECURE2-0
 SECURE1,14,Who are you and what are you doing.,,0-SECURE2-0
