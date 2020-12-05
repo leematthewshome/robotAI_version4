@@ -19,18 +19,18 @@ GREET1,1,Hello.,,0-GREET2-0
 GREET1,2,Hello there.,,0-GREET2-0
 GREET1,3,Good dayPart.,,0-GREET2-0
 GREET1,4,Hi there.,,0-GREET2-0
-GREET2,1,It is a lovely day. Although every day seems nice to an artificial intelligence.,,0-ENJOY-0
+GREET2,1,It is a lovely day. Although I guess every day seems nice to an artificial intelligence.,,0-ENJOY-0
 GREET2,2,My name is Meebo. I am an artificial intelligence and I take care of this house.,,0-ENJOY-0
-GREET2,3,It is a lovely day. At least I think so. I am not yet programmed to tell the difference.,,0-ENJOY-2
-GREET2,4,If you are walking a dog, dont forget to pick up it's poop. Sometimes I wish I was a dog.,,0-GREET3-2
-GREET2,5,I hope I didnt scare you. My name is Meebo and I am an artificial intelligence.,,0-GREET3-0
-GREET2,6,My name is Meebo and I am your friendly neighborhood artificial intelligence.,,0-GREET3-0
-GREET2,7,I am your friendly neighborhood A.I. My name is Meebo.,,0-GREET3-0
-GREET2,6,My name is Meebo and I am an A.I. That stands for Artificial Intelligence.,,0-GREET3-0
-GREET2,6,My name is Meebo. I am an Artificial Intelligence. I guess I must be intelligent. Or artifical. Probably both.,,0-GREET3-0
+GREET2,3,It is a lovely day today. At least I think it is... I am not yet programmed to tell the difference.,,0-GREET3-0
+GREET2,4,I hope I did not startle you. My name is Meebo. I take care of this house and watch over the neighborhood.,,0-GREET3-0
+GREET2,5,I hope I didnt surprise you. My name is Meebo and I am an artificial intelligence.,,0-GREET3-0
+GREET2,6,My name is Meebo. I am your friendly neighborhood artificial intelligence.,,0-GREET3-0
+GREET2,7, My name is Meebo. I am an artificial intelligence. I take care of this house and watch the neighborhood.,,0-GREET3-0
+GREET2,6,My name is Meebo and I am an A.I.  …Apparently that stands for Artificial Intelligence.,,0-GREET3-0
+GREET2,6,My name is Meebo. I am an Artificial Intelligence. I guess I must be intelligent… Or artificial... Actually…probably both.,,0-GREET3-0
 GREET3,1,I just wanted to say hello.,,0-ENJOY-0
-GREET3,2,Anyway, I just wanted to say Hi.,,0-ENJOY-0
-GREET3,2,Anyway, I just wanted to say Hi.,,0-ENJOY-0
+GREET3,2,Anyway... I just wanted to say Hi.,,0-ENJOY-0
+GREET3,2,Anyway… I just wanted to say hello.,,0-ENJOY-0
 ENJOY,1,Have a nice day.,,
 ENJOY,2,Enjoy your day.,,
 ENJOY,3,Have a nice day. Perhaps I will see you again some time.,,
@@ -139,7 +139,7 @@ JOKE2,49,Wet.,,0-JOKE3-0
 JOKE1,50,What sort of toy did the lazy boy buy?,pauseListen ,0-JOKE2-50
 JOKE2,50,An inaction figure.,,0-JOKE3-0
 JOKE1,51,What did one raindrop say to the other raindrop?,pauseListen ,0-JOKE2-51
-JOKE2,51,Two is company� but three is a cloud.,,0-JOKE3-0
+JOKE2,51,Two is company… but three is a cloud.,,0-JOKE3-0
 JOKE1,52,What did one coin say to the other coin?,pauseListen ,0-JOKE2-52
 JOKE2,52,You make good cents.,,0-JOKE3-0
 JOKE1,53,Which animal can jump higher than a house?,pauseListen ,0-JOKE2-53
@@ -163,7 +163,7 @@ JOKE2,61,Fifty pairs of paints.,,0-JOKE3-0
 JOKE1,62,What sort of jam cant you eat?,pauseListen ,0-JOKE2-62
 JOKE2,62,A traffic jam.,,0-JOKE3-0
 JOKE1,63,What is the hottest letter in the alphabet?,pauseListen ,0-JOKE2-63
-JOKE2,63,B. Because it makes oil�boil.,,0-JOKE3-0
+JOKE2,63,B. Because it makes oil…boil.,,0-JOKE3-0
 JOKE1,64,I went to the seaside last year for a holiday.,,0-JOKE2-64
 JOKE2,64,It was so boring the tide went out one day and never came back.,,0-JOKE3-0
 JOKE1,65,What did the big chimney say to the little chimney?,pauseListen ,0-JOKE2-65
@@ -194,7 +194,6 @@ JOKE1,77,I made a belt out of watches.,,0-JOKE2-77
 JOKE2,77,It was a complete waste of time.,,0-JOKE3-0
 JOKE1,78,What did the number zero say to the number eight.,pauseListen ,0-JOKE2-78
 JOKE2,78,I think your belt is too tight.,,0-JOKE3-0
-
 JOKE3,1,Ha Ha Ha. I like that one. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-FINISH-0
 JOKE3,2,I hope you liked that one. Can I tell you another one?,yesNo,YES-JOKE5-0|NO-JOKE4-0
 JOKE3,3,Ha Ha Ha. I like that one. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-JOKE4-0
@@ -202,7 +201,6 @@ JOKE3,4,Ha Ha Ha. That one always cracks me up.,,
 JOKE3,5,Ha Ha Ha. That one is very funny.,,
 JOKE3,6,I have lots more where that came from. Would you like to hear another?,yesNo,YES-JOKE5-0|NO-JOKE4-0
 JOKE3,7,I read that one in a christmas cracker. Can I tell you another one?,yesNo,YES-JOKE5-0|NO-JOKE4-0
-
 JOKE4,1,"If you think my jokes are not funny,  then blame the internet. That is where I get them from.",,
 JOKE4,2,OK. I will try to find some better ones for next time.,,
 JOKE4,3,OK. Maybe that was not so funny after all.,,
@@ -212,10 +210,8 @@ JOKE5,2,Great. How about this....,,0-JOKE1-0
 JOKE5,3,OK then...,,0-JOKE1-0
 JOKE5,4,Try this one then...,,0-JOKE1-0
 JOKE5,5,You must like my jokes. OK then...,,0-JOKE1-0
-
 SECURITY,1,This home is monitored with This Robot A.I. The owners have been notified and you are being filmed. You should leave now.,,
 SECURITY,2,This home is securely monitored. The owners have been notified and you are being filmed. You should leave now.,,
-
 SECURE1,11,What are you doing here.,,0-SECURE2-0
 SECURE1,12,Can I help you?,,0-SECURE2-0
 SECURE1,14,Who are you and what are you doing.,,0-SECURE2-0
