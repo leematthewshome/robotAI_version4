@@ -25,7 +25,7 @@ frameRate = 15
 minArea = 5000
 uploadEvery = 3 #seconds
 deltaThresh = 5
-vidSeconds = 5
+vidSeconds = 30
 
 
 class motionLoop(object):
@@ -122,7 +122,7 @@ class motionLoop(object):
                 if isMotion:
                     self.detectionEvent(camera, frame)
                 
-                #if timeout then send image and check if we should exit
+                #if loop timeout then send image and check if we should exit
                 if (timestamp - lastUploaded).seconds >= uploadEvery:
                     self.logger.debug("Checking for stop indicator and uploading image")
                     lastUploaded = timestamp
