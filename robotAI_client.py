@@ -51,7 +51,8 @@ def callback(ch, method, properties, body):
         logger.debug("Loading environment variables sent from brain")
         data = json.loads(body.decode("utf-8"))
         for key in data:
-            ENVIRON[key] = data[key]
+            if key != 'topdir':
+                ENVIRON[key] = data[key]
     elif app_id == 'motion':
         # call our set of actions related to motion
         import lib.client_motion as motion
