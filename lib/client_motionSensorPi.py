@@ -6,7 +6,8 @@ Author: Lee Matthews 2020
 Open computer vision (Open CV) libraries required 
 ===============================================================================================
 """
-import datetime
+from datetime import datetime
+from datetime import timedelta
 import imutils
 import time
 import cv2
@@ -14,18 +15,28 @@ import pika
 import logging
 import base64
 import os
+import io
 
 #imports for using Pi Camera
+import picamera
+from picamera.array import PiRGBArray
+"""
 from picamera.array import PiRGBArray
 from picamera import PiCamera
-
+from picamera import PiCameraCircularIO
+from picamera import PiVideoFrameType
+"""
 #settings for image capture and processing
 resolution = [640, 480]
-frameRate = 15
 minArea = 5000
-uploadEvery = 3 #seconds
 deltaThresh = 5
 vidSeconds = 30
+
+avg_image = None                # to store ongoing comparison image
+uploadEvery = 3                 # how often (seconds) to send image
+videoFileSize = 4000000         # seems to equate to 60 second videos
+recordTime = 35                 # how long record after motion
+lastUploaded = datetime.now()   # to store last time image sent
 
 
 class motionLoop(object):
@@ -35,7 +46,7 @@ class motionLoop(object):
         self.logger = logging.getLogger(__name__)
         self.logger.level = logging.DEBUG
         #self.logger.level = logging.INFO
-        
+        print 
         # setup variables for motion detection process
         #-------------------------------------------------
         self.logger.debug("Setting motion detection delay...")
@@ -43,7 +54,7 @@ class motionLoop(object):
             ENVIRON["motionDelay"] = 60
         else:
             ENVIRON["motionDelay"] = 60
-        ENVIRON["motionTime"] = datetime.datetime.now() + datetime.timedelta(seconds=ENVIRON["motionDelay"])
+        ENVIRON["motionTime"] = datetime.now() + timedelta(seconds=ENVIRON["motionDelay"])
         self.logger.debug("Motion detection delay set to " + str(ENVIRON["motionDelay"]))
 
         self.ENVIRON = ENVIRON
@@ -62,113 +73,143 @@ class motionLoop(object):
                 time.sleep(5)
 
 
-    # Loop to detect motion using the camera
+    # Loop to detect motion using Pi camera
     #------------------------------------------------------------------------------------
-    def detectPiCamera(self):
+    def detectPiCamera(self):   
         self.logger.debug("Starting to detect Motion")
+        saveAt = None
+        lastAlert = datetime.today()
+        startDetecting = datetime.now() + timedelta(seconds=15)                     # avoid detection while setting average
 
-        camera = PiCamera()
-        camera.resolution = tuple(resolution) 
-        camera.framerate = frameRate
-        rawCapture = PiRGBArray(camera, size=tuple(resolution))
         self.logger.debug("Warming up camera...")
         time.sleep(3)
-        avg = None
-        lastUploaded = datetime.datetime.now()
 
-        lastAlert = datetime.datetime.today()
-        frames = 0
-        
-        # capture frames from the camera
-        for f in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-            # grab the raw NumPy array representing the image and initialize the timestamp
-            frame = f.array
-            timestamp = datetime.datetime.now()
-            isMotion = False
-
-            # resize the frame, convert it to grayscale, and blur it
-            frame = imutils.resize(frame, width=500)
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            gray = cv2.GaussianBlur(gray, (21, 21), 0)
-
-            # if the average frame is None, initialize it
-            if avg is None:
-                avg = gray.copy().astype("float")
-                rawCapture.truncate(0)
-                continue
-
-            # accumulate weighted avg between the current frame and previous frames, then the difference b/w current frame and avg
-            cv2.accumulateWeighted(gray, avg, 0.5)
-            frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
-
-            # threshold the delta image, dilate the thresholded image to fill in holes, then find contours on thresholded image
-            thresh = cv2.threshold(frameDelta, deltaThresh, 255, cv2.THRESH_BINARY)[1]
-            thresh = cv2.dilate(thresh, None, iterations=2)
-            cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            cnts = imutils.grab_contours(cnts)
+        with picamera.PiCamera() as camera:
+            camera.resolution = tuple(resolution) 
+            #self.stream = picamera.PiCameraCircularIO(camera, seconds=30)          #seconds parameter not working
+            self.stream = picamera.PiCameraCircularIO(camera, size=videoFileSize)
+            camera.start_recording(self.stream, format='h264')
+            try:
+                while True:
+                    # check for motion on a routine interval
+                    time.sleep(.3)
+                    frame, isMotion = self.detect_motion(camera)
+                    # take action if motion detected
+                    if isMotion and datetime.now() > startDetecting:
+                        if saveAt is None:
+                            saveAt = datetime.now() + timedelta(seconds=recordTime)
+                        self.detectionEvent(camera, frame)
+                    # check to see if we need to save video due to motion
+                    if saveAt:
+                        if saveAt < datetime.now():
+                            self.write_video()
+                            saveAt = None
+            finally:
+                camera.stop_recording()            
             
-            # loop over the contours, but ignore small differences
-            for c in cnts:
-                if cv2.contourArea(c) < minArea:  
-                    continue
-                isMotion = True
-                
-            # if motion was detected or upload time has expired
-            if isMotion or (timestamp - lastUploaded).seconds >= uploadEvery:
-                ts = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
-                cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-                
-                #if motion detected check if we should take action
-                if isMotion:
-                    self.detectionEvent(camera, frame)
-                
-                #if loop timeout then send image and check if we should exit
-                if (timestamp - lastUploaded).seconds >= uploadEvery:
-                    self.logger.debug("Checking for stop indicator and uploading image")
-                    lastUploaded = timestamp
-                    self.sendImage(frame, 'camera')
-                    if self.ENVIRON["motion"] == False:
-                        self.logger.debug("Time to stop detecting motion")
-                        camera.clear()
-                        break
+            
+    # Detect whether motion is indicated between avg_image and current image
+    #------------------------------------------------------------------------------------
+    def detect_motion(self, camera):
+        isMotion = False
+        timestamp = datetime.now()
+        global avg_image
+        global lastUploaded
+        global uploadEvery
+        global deltaThresh
 
+        rawCapture = PiRGBArray(camera, size=tuple(resolution))
+        camera.capture(rawCapture, format="bgr", use_video_port=True)
+        frame = rawCapture.array
+
+        # resize the frame, convert it to grayscale, and blur it
+        frame = imutils.resize(frame, width=500)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
+        # if the average frame is None, initialize it
+        if avg_image is None:
+            avg_image = gray.copy().astype("float")
             rawCapture.truncate(0)
+            return frame, False
 
+        # accumulate weighted avg between the current frame and previous frames, then the difference b/w current frame and avg
+        cv2.accumulateWeighted(gray, avg_image, 0.5)
+        frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg_image))
 
+        # threshold the delta image, dilate the thresholded image to fill in holes, then find contours on thresholded image
+        thresh = cv2.threshold(frameDelta, deltaThresh, 255, cv2.THRESH_BINARY)[1]
+        thresh = cv2.dilate(thresh, None, iterations=2)
+        cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
 
+        # loop over the contours, but ignore small differences
+        for c in cnts:
+            if cv2.contourArea(c) < minArea:  
+                continue
+            isMotion = True
 
+        # check to see if we need to stop detecting of submit image to brain
+        if (timestamp - lastUploaded).seconds >= uploadEvery:
+            print("Checking for stop indicator and uploading image")
+            lastUploaded = timestamp
+        
+        rawCapture.truncate(0)    
+        return frame, isMotion
+            
+
+            
+    # Write data from circular stream to file
+    #------------------------------------------------------------------------------------
+    def write_video(self):
+        self.logger.debug('Writing circular video buffer to file...')
+        filepath = os.path.join(self.ENVIRON["topdir"], 'static/motionImages', datetime.now().strftime("%Y%m%d%H%M%S") + '.h264') 
+
+        with self.stream.lock:
+            # Find the first header frame in the video
+            for frame in self.stream.frames:
+                if frame.frame_type == picamera.PiVideoFrameType.sps_header:
+                    self.stream.seek(frame.position)
+                    break
+            # Write the rest of the stream to disk
+            with io.open(filepath, 'wb') as output:
+                output.write(self.stream.read())
+        self.logger.debug('File ' + filepath + ' created!')
+        # Wipe the circular stream once we're done
+        self.stream.seek(0)
+        self.stream.truncate()
+        ###################################################################
+        # TODO add code to synch video files to the cloud and delete locally
+        ###################################################################
+                
+
+                
     # Work out what we need to do when motion detected
-    # ============================================================================================
+    #------------------------------------------------------------------------------------
     def detectionEvent(self, camera, frame):
         self.logger.debug('Motion detected. Determining course of action... ')
 
         # If we are already talking then no need to start speech again
         if self.ENVIRON["talking"]:
             self.logger.debug('Motion detected but already talking.... ')
+            ###################################################################
             # TODO add code to later try to identify who we might be talking to
             ###################################################################
         else:  
             # check for either security or friendly mode and delay has expired
-            if (self.ENVIRON["secureMode"] or self.ENVIRON["friendMode"]) and (self.ENVIRON["motionTime"] < datetime.datetime.now()):
+            if (self.ENVIRON["secureMode"] or self.ENVIRON["friendMode"]) and (self.ENVIRON["motionTime"] < datetime.now()):
                 self.logger.debug('Motion detected and timer has expired so taking action. ')
                 # send image to brain to check if person detected
                 self.sendImage(frame, 'motion')
-                # record X seconds of video and synch to cloud anyway
-                filepath = os.path.join('/home/pi/robotAI4/static/motionImages/', datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.h264') 
-                camera.start_recording(filepath)
-                time.sleep(vidSeconds)
-                camera.stop_recording()
-                # TODO add code to synch video files to the cloud and delete locally
-                ###################################################################
             else:
-                diff = self.ENVIRON["motionTime"] - datetime.datetime.now()
+                diff = self.ENVIRON["motionTime"] - datetime.now()
                 self.logger.debug("Motion detected but taking no action. %s seconds delay remains" % str(diff.seconds))
                 pass
                 
 
         
     # Send image file to server
-    # ============================================================================================
+    #------------------------------------------------------------------------------------
     def sendImage(self, frame, requestType):
         retval, buffer = cv2.imencode('.jpg', frame)
         jpgb64 = base64.b64encode(buffer)
@@ -215,10 +256,9 @@ if __name__ == "__main__":
     ENVIRON["secureMode"] = True
     ENVIRON["friendMode"] = True
     ENVIRON["talking"] = False
+    ENVIRON["topdir"] = '/home/pi/robotAI4/'
 
 
     doSensor(ENVIRON)
     
-    doSensor(ENVIRON, SENSORQ, MIC)
-
-
+    
