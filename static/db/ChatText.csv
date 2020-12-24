@@ -26,11 +26,11 @@ GREET2,4,I hope I did not startle you. My name is Meebo. I take care of this hou
 GREET2,5,I hope I didnt surprise you. My name is Meebo and I am an artificial intelligence.,,0-GREET3-0
 GREET2,6,My name is Meebo. I am your friendly neighborhood artificial intelligence.,,0-GREET3-0
 GREET2,7, My name is Meebo. I am an artificial intelligence. I take care of this house and watch the neighborhood.,,0-GREET3-0
-GREET2,6,My name is Meebo and I am an A.I.  …Apparently that stands for Artificial Intelligence.,,0-GREET3-0
+GREET2,6,My name is Meebo and I am an A. I.  …Apparently that stands for Artificial Intelligence.,,0-GREET3-0
 GREET2,6,My name is Meebo. I am an Artificial Intelligence. I guess I must be intelligent… Or artificial... Actually…probably both.,,0-GREET3-0
 GREET3,1,I just wanted to say hello.,,0-ENJOY-0
 GREET3,2,Anyway... I just wanted to say Hi.,,0-ENJOY-0
-GREET3,2,Anyway… I just wanted to say hello.,,0-ENJOY-0
+GREET3,2,Anyway... I just wanted to say hello.,,0-ENJOY-0
 ENJOY,1,Have a nice day.,,
 ENJOY,2,Enjoy your day.,,
 ENJOY,3,Have a nice day. Perhaps I will see you again some time.,,
@@ -230,3 +230,4 @@ SECURE4,44,My film is uploaded to the internet.,,0-SECURE5-0
 SECURE5,51,Please leave immediately.,,
 SECURE5,52,You should leave immediately.,,
 SECURE5,53,You must leave immediately.,,
+
