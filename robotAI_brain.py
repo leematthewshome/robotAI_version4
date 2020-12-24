@@ -16,14 +16,6 @@ import base64
 from multiprocessing import Process
 
 
-# import python modules for chatbot
-import json 
-import numpy as np 
-from sklearn.preprocessing import LabelEncoder
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import load_model
-
 # import shared utility functions (this also sets some common variables)
 from lib import common_utils as utils
 
@@ -36,67 +28,14 @@ myfile = os.path.join(topdir, 'settings.ini')
 config = configparser.ConfigParser()
 config.read(myfile)
 
-#---------------------------------------------------------
-# Cache our chatbot model here to speed up response
-#---------------------------------------------------------
-modelpath = os.path.join(topdir, 'static/MLModels/chatbot')
-chatpath  = os.path.join(topdir, 'static/MLModels/chatbot/chatschema.json')
-
-chatmodel = load_model(modelpath)
-with open(chatpath) as file:
-    chatdata = json.load(file)
-
-training_sentences = []
-training_labels = []
-for intent in chatdata['intents']:
-    for pattern in intent['patterns']:
-        training_sentences.append(pattern)
-        training_labels.append(intent['tag'])
-
-# encode our list of tags  
-encoder = LabelEncoder()
-encoder.fit(training_labels)
-training_labels = encoder.transform(training_labels)
-
-vocab_size = 20000
-embedding_dim = 16
-oov_token = "<OOV>"
-max_len = 20
-trunc_type = 'post'
-
-tokenizer = Tokenizer(num_words=vocab_size, oov_token=oov_token) 
-tokenizer.fit_on_texts(training_sentences)
-
 
 #---------------------------------------------------------
 # Various functions
 #---------------------------------------------------------
 
-# build chat text database if required
-#---------------------------------------------------------
-def buildDB(logger, topdir):
-    logger.warning("Warning: No ChatText DB found. Creating now... ")
-    csvpath = os.path.join(topdir, 'static/db/ChatText.csv')
-    conn = sqlite3.connect(dbpath)
-    # now create tables and populate from CSV
-    cur = conn.cursor() 
-    cur.execute("""CREATE TABLE ChatText (category VARCHAR(32) NOT NULL, item INTEGER NOT NULL, text VARCHAR(255), funct VARCHAR(255), next VARCHAR(255))""")
-    cur.execute("""CREATE INDEX ChatText_cat ON ChatText(category)""")
-    cur.execute("""CREATE INDEX ChatText_catitem ON ChatText(category, item)""")
-    with open(csvpath, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            data = (row['category'], row['item'], row['text'], row['funct'], row['next'])
-            cur.execute("INSERT INTO ChatText VALUES (?,?,?,?,?);", data)
-    conn.commit()
-    logger.warning("ChatText DB was successfully created from CSV. ")
-    conn.close()
-
-
 # Function executed when queue message received
 # -------------------------------------------------------
 def callback(ch, method, properties, body):
-    #logger.debug("Callback function triggered by message")
     try:
         app_id = properties.app_id
         content = properties.content_type
@@ -123,12 +62,11 @@ def callback(ch, method, properties, body):
         #logger.debug("Saved image to " + filePath )
     elif app_id == 'motion':
         # For motion detection events check the image for any humans
-        import lib.brain_motion as motion
-        motion.doLogic(ENVIRON, connection, content, reply_to, body)
+        detectorAPI.doLogic(connection, content, reply_to, body)
     elif app_id == 'voice':
         # For voice events we need to determine intent of the speech and reply accordingly
-        import lib.brain_voice as voice
-        voice.doLogic(ENVIRON, content, reply_to, body, chatmodel, chatdata, tokenizer, encoder)
+        #import lib.brain_voice as voice
+        voiceAPI.doLogic(content, reply_to, body)
     else:
         logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)    
 
@@ -146,15 +84,6 @@ if __name__ == '__main__':
         logger.level = logging.DEBUG
     else:
         logger.level = logging.INFO
-
-    # Check for configuration database
-    #-----------------------------------------------------
-    dbpath = os.path.join(topdir, 'static/db/robotAI.db')
-    if not os.path.isfile(dbpath):
-        import sqlite3
-        import csv
-        buildDB(logger, topdir)
-    
     
     # Setup Environment data to be shared with clients
     #-----------------------------------------------------
@@ -167,6 +96,14 @@ if __name__ == '__main__':
     ENVIRON["queueUser"] = config['QUEUE']['queueUser']
     ENVIRON["queuePass"] = config['QUEUE']['queuePass']
     ENVIRON["brainQueue"] = config['QUEUE']['brainQueue']
+
+    #instatiate code libraries to save time 
+    #-----------------------------------------------------
+    logger.debug("Loading the code libraries for faster responses ")
+    import lib.brain_motion as motion
+    detectorAPI = motion.detectorAPI(ENVIRON)
+    import lib.brain_voice as voice
+    voiceAPI = voice.voiceAPI(ENVIRON)
 
     # define some variables
     isWWWeb = False		
@@ -190,6 +127,7 @@ if __name__ == '__main__':
         logger.error('Unable to connect to Message Queue ' + config['QUEUE']['queueSrvr'])
 
 
+
     # ---------------------------------------------------------------------------------------
     # kick off website for cam feeds
     # ---------------------------------------------------------------------------------------
@@ -201,7 +139,7 @@ if __name__ == '__main__':
             m.start()
         except:
             logger.error('Failed to start flask server for camera feeds')
-   
+ 
    
     # If successful start listening on Central channel 
     #------------------------------------------------------
