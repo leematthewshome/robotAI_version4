@@ -13,7 +13,8 @@ import json
 import base64
 import pika
 from datetime import datetime
-
+import pickle
+import imutils
 
 #-------------------------------------------------------------------------------------------------------------------------
 # Object Detection detector
@@ -34,18 +35,25 @@ class detectorAPI:
         
         self.ENVIRON = ENVIRON
 
-        # filepath parameters parameters
+        # parameters for object detection model
         obj_model_path = os.path.join(ENVIRON["topdir"], "static/MLModels/object/MobileNetSSD_deploy.caffemodel")
         obj_proto_path = os.path.join(ENVIRON["topdir"], "static/MLModels/object/MobileNetSSD_deploy.prototxt.txt")
-        self.obj_conf_cutoff = 0.5
-
-        # initialize the list of class labels for detection
         self.CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
                 "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
         self.obj_net = cv2.dnn.readNetFromCaffe(obj_proto_path, obj_model_path)
+        self.obj_conf_cutoff = 0.5
+
+        # parameters for face identification model
+        modelPath = os.path.join(ENVIRON["topdir"], "static/MLModels/faceid/res10_300x300_ssd_iter_140000.caffemodel")
+        protoPath = os.path.join(ENVIRON["topdir"], "static/MLModels/faceid/deploy.prototxt")
+        self.face_detector = cv2.dnn.readNetFromCaffe(protoPath, modelPath)
+        self.face_embedder = cv2.dnn.readNetFromTorch(os.path.join(ENVIRON["topdir"], "static/MLModels/faceid/openface_nn4.small2.v1.t7"))
+        self.face_recognizer = pickle.loads(open(os.path.join(ENVIRON["topdir"], "static/MLModels/faceid/output/recognizer.pickle"), "rb").read())
+        self.face_labels = pickle.loads(open(os.path.join(ENVIRON["topdir"], "static/MLModels/faceid/output/le.pickle"), "rb").read())
+        self.face_conf_cutoff = 0.5
 
 
-    # function to detect objects
+    # function to detect objects. Returns a dictionary of objects by count
     #-----------------------------------------------------------------------
     def objectCount(self, imgbin):
         frame = cv2.imdecode(np.frombuffer(imgbin, np.uint8), -1)
@@ -70,10 +78,51 @@ class detectorAPI:
                     dictObjects[className] = dictObjects[className] + 1
                 else:
                     dictObjects[className] = 1
-
-        #return list of what we detected
         return dictObjects
 
+
+    # function to recognize faces. Returns a list of faces
+    #-----------------------------------------------------------------------
+    def recognizer(self, imgbin):
+        faces = False
+        listFaces = []
+        image = cv2.imdecode(np.frombuffer(imgbin, np.uint8), -1)
+        image = imutils.resize(image, width=600)
+        (h, w) = image.shape[:2]
+        blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0), swapRB=False, crop=False)
+        self.face_detector.setInput(blob)
+        detections = self.face_detector.forward()
+        # loop over the detections
+        for i in range(0, detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
+            if confidence > self.face_conf_cutoff:
+                faces = True
+                self.logger.debug('Found a face. Will try to recognise')
+                # compute the (x, y) coordinates of the face and extract that image as 'face'
+                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                (startX, startY, endX, endY) = box.astype("int")
+                face = image[startY:endY, startX:endX]
+                (fH, fW) = face.shape[:2]
+                # ensure the face width and height are sufficiently large
+                if fW < 20 or fH < 20:
+                    self.logger.debug('Face is not big enough to analyse')
+                    continue
+                # construct a blob for the face ROI, then pass the blob through our face model to quantify the face
+                faceBlob = cv2.dnn.blobFromImage(face, 1.0 / 255, (96, 96), (0, 0, 0), swapRB=True, crop=False)
+                self.face_embedder.setInput(faceBlob)
+                vec = self.face_embedder.forward()
+                # perform classification to recognize the face
+                preds = self.face_recognizer.predict_proba(vec)[0]
+                j = np.argmax(preds)
+                proba = preds[j]
+                name = self.face_labels.classes_[j]
+                # what was the result
+                listFaces.append(name)
+        if not faces:
+            self.logger.debug('No faces were detected in the image')
+            
+        return listFaces
+        
 
     # Function called by robotAI_brain for this set of logic
     #-----------------------------------------------------------------------
@@ -99,12 +148,19 @@ class detectorAPI:
                 f_output.write(imgbin)
             self.logger.debug("Saved image to " + filePath )
 
-            # use Machine learning to determine if a person exists in the image
+            # use ML to detect objects in the image
             # -----------------------------------------------------------------
-            self.logger.debug('Analysing the image using detectorAPI class')
-            result = self.objectCount(imgbin)
+            self.logger.debug('Analysing the image for recognized objects')
+            detected = self.objectCount(imgbin)
+            
+            # use ML to recognise faces in the image, add to previous results
+            # -----------------------------------------------------------------
+            self.logger.debug('Analysing the image for recognized faces')
+            faces = self.recognizer(imgbin)
+            detected["faces"] = faces
+
             # respond to the client device that submitted the message
-            body = json.dumps(result)
+            body = json.dumps(detected)
             self.logger.debug('Sending data to: ' + reply_to + '. body = ' + body)
             channel1 = msgQueue.channel()
             channel1.queue_declare(reply_to)
