@@ -10,6 +10,7 @@ import json
 import pika
 import datetime
 
+
 #---------------------------------------------------------------------------
 # Main function called by robotAI_client 
 #---------------------------------------------------------------------------
@@ -42,19 +43,30 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
 
     # Check if JSON is regarding a face being identified
     if 'faces' in body_json:
-        faces = body_json["faces"]
+        faces = len(body_json["faces"])
     else:
         faces = 0
     logger.debug("Faces detected = " + str(faces))
     
-    # Take appropriate action if JSON is for recognised face 
+    # If we recognised face(s) then set interrupt
     #-------------------------------------------------------------
     if faces > 0:
-        ########## This section to be used later on ############
-        pass
+        # if we have not already recognised someone, then check list of faces
+        try:
+            recognized = ENVIRON["recognized"]
+        except:
+            recognized = None
+        if not recognized:
+            logger.debug("Faces recognized. Setting to innterrupt speech")
+            sep = ""
+            for name in faces:
+                # ignore unknown faces
+                if name != 'unknown':
+                    recognized = recognized + sep + name  
+                    sep = ", "
+            ENVIRON["recognized"] = recognized
 
-        # Take appropriate action if JSON is regarding person detected
-    # (but only if delay expired...to prevent double conversations)
+    # Take action if person was detecte (but only if delay expired...to prevent double conversations)
 	#-------------------------------------------------------------
     if persons > 0 and ENVIRON["motionTime"] < datetime.datetime.now():
     
@@ -68,13 +80,18 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
                 body = '{"action": "getChat", "chatItem": "SECURITY-0"}'
             elif ENVIRON["friendMode"]=="True":
                 body = '{"action": "getChat", "chatItem": "GREET1-0"}'
-            # Request chat data from brain
             logger.debug("About to send this data: " +body+"  to "+reply_to)
-            channel1 = QCONN.channel()
-            channel1.queue_declare(reply_to)
-            properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["clientName"])
-            channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
+            sendToMQ(ENVIRON, QCONN, reply_to, body)
     else:
          logger.debug("0 person detected in image so not starting chat/warning")
 
 
+#---------------------------------------------------------------------------
+# Function to send chat trigger 
+#---------------------------------------------------------------------------
+def sendToMQ(ENVIRON, QCONN, reply_to, body):
+    # Request chat data from brain
+    channel1 = QCONN.channel()
+    channel1.queue_declare(reply_to)
+    properties = pika.BasicProperties(app_id='voice', content_type='application/json', reply_to=ENVIRON["clientName"])
+    channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)

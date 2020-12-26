@@ -96,9 +96,9 @@ class motionLoop(object):
                     frame, isMotion = self.detect_motion(camera)
                     # take action if motion detected
                     if isMotion and datetime.now() > startDetecting:
+                        self.detectionEvent(camera, frame)
                         if saveAt is None:
                             saveAt = datetime.now() + timedelta(seconds=recordTime)
-                        self.detectionEvent(camera, frame)
                     # check to see if we need to save video due to motion
                     if saveAt:
                         if saveAt < datetime.now():
@@ -191,10 +191,9 @@ class motionLoop(object):
 
         # If we are already talking then no need to start speech again
         if self.ENVIRON["talking"]:
-            self.logger.debug('Motion detected but already talking.... ')
-            ###################################################################
-            # TODO add code to later try to identify who we might be talking to
-            ###################################################################
+            self.logger.debug('Motion but talking...So sending image to recognize faces')
+            self.sendImage(frame, 'motion')
+            time.sleep(1)
         else:  
             # check for either security or friendly mode and delay has expired
             if (self.ENVIRON["secureMode"] or self.ENVIRON["friendMode"]) and (self.ENVIRON["motionTime"] < datetime.now()):
