@@ -41,6 +41,9 @@ class voice():
             self.logger.level = logging.INFO
 
         self.ENVIRON = ENVIRON
+        # set environ vars for chat
+        self.ENVIRON["stopChat"] = False
+        
         self.language = language
         self.stt = client_stt.stt(ENVIRON)
         
@@ -97,6 +100,11 @@ class voice():
         else:
             # loop through each item in the chat text returned
             for row in chatList:
+                # break loop if we recognised someone, as new chat should be started
+                if self.ENVIRON["stopChat"]:
+                    self.logger.debug("Interrupting chat for text: " + row['text'])
+                    self.ENVIRON["stopChat"] = False
+                    break
                 resp = self.doChatItem(row['text'], row['funct'])
                 # if we need to select a path then loop through all options and search for response
                 nText = row['next']

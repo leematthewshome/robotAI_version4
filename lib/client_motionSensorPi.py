@@ -46,7 +46,6 @@ class motionLoop(object):
         self.logger = logging.getLogger(__name__)
         self.logger.level = logging.DEBUG
         #self.logger.level = logging.INFO
-        print 
         # setup variables for motion detection process
         #-------------------------------------------------
         self.logger.debug("Setting motion detection delay...")
@@ -56,6 +55,8 @@ class motionLoop(object):
             ENVIRON["motionDelay"] = 60
         ENVIRON["motionTime"] = datetime.now() + timedelta(seconds=ENVIRON["motionDelay"])
         self.logger.debug("Motion detection delay set to " + str(ENVIRON["motionDelay"]))
+        ENVIRON["recognized"] = None
+        ENVIRON["recognizeClear"] = None
 
         self.ENVIRON = ENVIRON
         credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
@@ -162,7 +163,7 @@ class motionLoop(object):
     # Write data from circular stream to file
     #------------------------------------------------------------------------------------
     def write_video(self):
-        self.logger.debug('Writing circular video buffer to file...')
+        self.logger.debug('@@@@@@@@@ Writing circular video buffer to file...')
         filepath = os.path.join(self.ENVIRON["topdir"], 'static/motionImages', datetime.now().strftime("%Y%m%d%H%M%S") + '.h264') 
 
         with self.stream.lock:
@@ -174,7 +175,7 @@ class motionLoop(object):
             # Write the rest of the stream to disk
             with io.open(filepath, 'wb') as output:
                 output.write(self.stream.read())
-        self.logger.debug('File ' + filepath + ' created!')
+        self.logger.debug('@@@@@@@@@ File ' + filepath + ' created!')
         # Wipe the circular stream once we're done
         self.stream.seek(0)
         self.stream.truncate()
@@ -188,10 +189,16 @@ class motionLoop(object):
     #------------------------------------------------------------------------------------
     def detectionEvent(self, camera, frame):
         self.logger.debug('Motion detected. Determining course of action... ')
-
+        
+        # clear recognized faces if time to do so 
+        if type(self.ENVIRON["recognizeClear"]) == datetime:
+            if self.ENVIRON["recognizeClear"] < datetime.now():
+                self.ENVIRON["recognized"] = None
+                self.ENVIRON["recognizeClear"] = None
+                
         # If we are already talking then no need to start speech again
         if self.ENVIRON["talking"]:
-            self.logger.debug('Motion but talking...So sending image to recognize faces')
+            self.logger.debug('Motion but talking...sending image to recognize faces')
             self.sendImage(frame, 'motion')
             time.sleep(1)
         else:  

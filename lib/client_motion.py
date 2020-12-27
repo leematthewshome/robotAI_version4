@@ -43,30 +43,43 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
 
     # Check if JSON is regarding a face being identified
     if 'faces' in body_json:
-        faces = len(body_json["faces"])
+        facelist = body_json["faces"]
+        faces = len(facelist)
     else:
         faces = 0
     logger.debug("Faces detected = " + str(faces))
     
-    # If we recognised face(s) then set interrupt
+    # If we recognised face(s) then set interrupt & start new chat
     #-------------------------------------------------------------
     if faces > 0:
+        logger.debug(str(facelist))
         # if we have not already recognised someone, then check list of faces
-        try:
-            recognized = ENVIRON["recognized"]
-        except:
-            recognized = None
-        if not recognized:
-            logger.debug("Faces recognized. Setting to innterrupt speech")
+        recognized = ENVIRON["recognized"]
+        if recognized:
+            logger.debug("Already have recognized someone. Skipping till ENVIRON cleared")
+        else:
+            logger.debug("Faces recognized. Setting to interrupt speech")
             sep = ""
-            for name in faces:
+            faceStr = ""
+            for id in facelist:
                 # ignore unknown faces
-                if name != 'unknown':
-                    recognized = recognized + sep + name  
+                if id != 'unknown':
+                    faceStr = faceStr + sep + id  
                     sep = ", "
-            ENVIRON["recognized"] = recognized
+            #only interrupt if we detected a named face. Forget them after 60 seconds
+            if len(faceStr) > 0:
+                ######################################################################################
+                # TODO need to interrupt chat but cannot while MQ reader waits for responses to finish 
+                ######################################################################################
+                ENVIRON["recognized"] = faceStr
+                ENVIRON["recognizeClear"] = datetime.datetime.now() + datetime.timedelta(seconds=60)
+                body = '{"action": "getChat", "chatItem": "SYSTEM-1"}'
+                logger.debug("About to send this data: " +body+"  to "+reply_to)
+                sendToMQ(ENVIRON, QCONN, reply_to, body)
+                return
 
-    # Take action if person was detecte (but only if delay expired...to prevent double conversations)
+    # Take action if person was detected 
+    # But to prevent double conversations: only if delay expired...and if we have not recognised someone
 	#-------------------------------------------------------------
     if persons > 0 and ENVIRON["motionTime"] < datetime.datetime.now():
     
