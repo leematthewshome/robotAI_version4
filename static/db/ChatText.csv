@@ -4,20 +4,19 @@ SYSTEM,2,Uh Oh. Something went wrong with my chat function,,
 MASTER,1,Hello Master. ,,0-QUESTN-2
 GREETA,1,Hello.,,0-GREETB-0
 GREETA,2,Hello there.,,0-GREETB-0
-GREETA,3,Good dayPart.,,0-GREETB-0
+GREETA,3,Good #dayPart#.,,0-GREETB-0
 GREETA,4,Good day.,,0-GREETB-0
 GREETB,1,How are you today?,pauseListen,0-STMNT-0
 GREETB,2,What are you doing?,pauseListen,0-STMNT-0
 GREETB,3,How are things going with you?,pauseListen,0-STMNT-0
 GREETB,4,How are you today?,pauseListen,0-STMNT-0
-STMNT,1,I am feeling very good today.,,
-STMNT,2,I am planning on staying inside today. I like it inside.,,
-STMNT,3,I am feeling happy. I like being a robot.,,
-STMNT,3,I am feeling tired. I might charge my batteries.,,
+STMNT,1,I enjoy being a robot.,,
+STMNT,2,I enjoy my work.,,
+STMNT,3,I like being useful.,,
 STMNT,4,Have a nice day today.,,
 GREET1,1,Hello.,,0-GREET2-0
 GREET1,2,Hello there.,,0-GREET2-0
-GREET1,3,Good dayPart.,,0-GREET2-0
+GREET1,3,Good #dayPart#.,,0-GREET2-0
 GREET1,4,Hi there.,,0-GREET2-0
 GREET2,1,It is a lovely day. Although I guess every day seems nice to an artificial intelligence.,,0-ENJOY-0
 GREET2,2,My name is Meebo. I am an artificial intelligence and I take care of this house.,,0-ENJOY-0
@@ -26,17 +25,25 @@ GREET2,4,I hope I did not startle you. My name is Meebo. I take care of this hou
 GREET2,5,I hope I didnt surprise you. My name is Meebo and I am an artificial intelligence.,,0-GREET3-0
 GREET2,6,My name is Meebo. I am your friendly neighborhood artificial intelligence.,,0-GREET3-0
 GREET2,7, My name is Meebo. I am an artificial intelligence. I take care of this house and watch the neighborhood.,,0-GREET3-0
-GREET2,6,My name is Meebo and I am an A. I.  …Apparently that stands for Artificial Intelligence.,,0-GREET3-0
-GREET2,6,My name is Meebo. I am an Artificial Intelligence. I guess I must be intelligent… Or artificial... Actually…probably both.,,0-GREET3-0
+GREET2,6,My name is Meebo and I am an A. I.  That stands for Artificial Intelligence.,,0-GREET3-0
+GREET2,6,My name is Meebo. I am an Artificial Intelligence. I guess I must be intelligent… Or artificial... Actually probably both.,,0-ENJOY-0
 GREET3,1,I just wanted to say hello.,,0-ENJOY-0
-GREET3,2,Anyway... I just wanted to say Hi.,,0-ENJOY-0
-GREET3,2,Anyway... I just wanted to say hello.,,0-ENJOY-0
+GREET3,2,"Anyway, I just wanted to say Hi.",,0-ENJOY-0
+GREET3,3,"Anyway, I just wanted to say hello.",,0-ENJOY-0
 ENJOY,1,Have a nice day.,,
 ENJOY,2,Enjoy your day.,,
 ENJOY,3,Have a nice day. Perhaps I will see you again some time.,,
 ENJOY,4,Enjoy your day. Maybe we will meet again.,,
 ENJOY,5,It was nice to meet you. Enjoy your day.,,
 ENJOY,6,It was nice to meet you. See you next time.,,
+RECOG,1,"Oh, hello #name#. How are you today.",,0-FINE-0
+RECOG,2,"Oh, it is you #name#. Good #dayPart#. I hope you are well.",,
+RECOG,3,Hello #name#. I just recognised you. How are you.,,0-FINE-0
+RECOG,4,"Oh, hello #name#. I recognise you now. How are you.",,0-FINE-0
+FINE,1,I am doing fine.,,0-STMNT-0
+FINE,2,I am feeling good.,,0-STMNT-0
+FINE,3,I am a little tired. I might charge my batteries,,
+
 FINISH,1,OK.,,
 JOKE1,1,What is brown and sticky?,pauseListen,0-JOKE2-1
 JOKE2,1,A stick.,,0-JOKE3-0
