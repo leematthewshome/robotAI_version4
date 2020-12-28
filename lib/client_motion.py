@@ -71,6 +71,9 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
                 ######################################################################################
                 # TODO need to interrupt chat but cannot while MQ reader waits for responses to finish 
                 ######################################################################################
+                # Reset delay for when next action taken in client_motionSensor 
+                ENVIRON["motionTime"] = datetime.datetime.now() + datetime.timedelta(seconds=ENVIRON["motionDelay"])
+                # Trigger chat with recognised person via message queue                
                 ENVIRON["recognized"] = faceStr
                 ENVIRON["recognizeClear"] = datetime.datetime.now() + datetime.timedelta(seconds=60)
                 body = '{"action": "getChat", "chatItem": "SYSTEM-1"}'

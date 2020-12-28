@@ -178,8 +178,8 @@ class voice():
     # update the chat text with any context sensitive values
     # ------------------------------------------------------
     def enrichText(self, text):
-        # replace the keyword 'dayPart' with relevant replacement
-        if 'dayPart' in text:
+        # replace the keyword '#dayPart#' with relevant replacement
+        if '#dayPart#' in text:
             now = datetime.datetime.now()
             hour = now.hour
             if hour < 12:
@@ -188,8 +188,16 @@ class voice():
                 dayPart = "Afternoon"
             else:
                 dayPart = "Evening"
-            text = text.replace('dayPart', dayPart)
-            
+            text = text.replace('#dayPart#', dayPart)
+        
+        # embed recognised names into speech
+        if '#name#' in text:
+            try:
+                names = self.ENVIRON["recognized"]
+            except:
+                names = ""
+            text = text.replace('#name#', names)
+ 
         # fix mention of years
         year_regex = re.compile(r'(\b)(\d\d)([1-9]\d)(\b)')
         text = year_regex.sub('\g<1>\g<2> \g<3>\g<4>', text) 
