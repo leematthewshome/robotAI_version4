@@ -20,13 +20,8 @@ import io
 #imports for using Pi Camera
 import picamera
 from picamera.array import PiRGBArray
-"""
-from picamera.array import PiRGBArray
-from picamera import PiCamera
-from picamera import PiCameraCircularIO
-from picamera import PiVideoFrameType
-"""
-#settings for image capture and processing
+
+#settings for image capture and motion detecton
 resolution = [640, 480]
 minArea = 5000
 deltaThresh = 5
@@ -35,7 +30,7 @@ vidSeconds = 30
 avg_image = None                # to store ongoing comparison image
 uploadEvery = 3                 # how often (seconds) to send image
 videoFileSize = 4000000         # seems to equate to 60 second videos
-recordTime = 35                 # how long record after motion
+recordTime = 20                 # how long record after motion
 lastUploaded = datetime.now()   # to store last time image sent
 
 
@@ -46,6 +41,7 @@ class motionLoop(object):
         self.logger = logging.getLogger(__name__)
         self.logger.level = logging.DEBUG
         #self.logger.level = logging.INFO
+        
         # setup variables for motion detection process
         #-------------------------------------------------
         self.logger.debug("Setting motion detection delay...")
@@ -57,6 +53,8 @@ class motionLoop(object):
         self.logger.debug("Motion detection delay set to " + str(ENVIRON["motionDelay"]))
         ENVIRON["recognized"] = None
         ENVIRON["recognizeClear"] = None
+        ENVIRON["saveVideo"] = None
+        ENVIRON["videoTime"] = recordTime
 
         self.ENVIRON = ENVIRON
         credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
@@ -77,8 +75,10 @@ class motionLoop(object):
     # Loop to detect motion using Pi camera
     #------------------------------------------------------------------------------------
     def detectPiCamera(self):   
-        self.logger.debug("Starting to detect Motion")
+        global lastUploaded
+        global uploadEvery
         saveAt = None
+        self.logger.debug("Starting to detect Motion")
         lastAlert = datetime.today()
         startDetecting = datetime.now() + timedelta(seconds=15)                     # avoid detection while setting average
 
@@ -93,18 +93,35 @@ class motionLoop(object):
             try:
                 while True:
                     # check for motion on a routine interval
+                    timestamp = datetime.now()
                     time.sleep(.3)
                     frame, isMotion = self.detect_motion(camera)
+                    
                     # take action if motion detected
                     if isMotion and datetime.now() > startDetecting:
+                        ts = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
+                        cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)            
                         self.detectionEvent(camera, frame)
-                        if saveAt is None:
-                            saveAt = datetime.now() + timedelta(seconds=recordTime)
+                        #if saveAt is None:
+                        #    saveAt = datetime.now() + timedelta(seconds=recordTime)
+                    
+                    # check to see if we need to stop detecting or submit image to brain
+                    if (timestamp - lastUploaded).seconds >= uploadEvery:
+                        self.logger.debug("Checking for stop indicator and uploading image")
+                        ts = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
+                        cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)            
+                        lastUploaded = timestamp
+                        self.sendImage(frame, 'camera')
+                        if self.ENVIRON["motion"] == False:
+                            self.logger.debug("Time to stop detecting motion")
+                            break            
+                            
+                            
                     # check to see if we need to save video due to motion
-                    if saveAt:
-                        if saveAt < datetime.now():
+                    if self.ENVIRON["saveVideo"]:
+                        if self.ENVIRON["saveVideo"] < datetime.now():
                             self.write_video()
-                            saveAt = None
+                            self.ENVIRON["saveVideo"] = None
             finally:
                 camera.stop_recording()            
             
@@ -113,10 +130,7 @@ class motionLoop(object):
     #------------------------------------------------------------------------------------
     def detect_motion(self, camera):
         isMotion = False
-        timestamp = datetime.now()
         global avg_image
-        global lastUploaded
-        global uploadEvery
         global deltaThresh
 
         rawCapture = PiRGBArray(camera, size=tuple(resolution))
@@ -150,11 +164,6 @@ class motionLoop(object):
                 continue
             isMotion = True
 
-        # check to see if we need to stop detecting of submit image to brain
-        if (timestamp - lastUploaded).seconds >= uploadEvery:
-            print("Checking for stop indicator and uploading image")
-            lastUploaded = timestamp
-        
         rawCapture.truncate(0)    
         return frame, isMotion
             
@@ -163,7 +172,7 @@ class motionLoop(object):
     # Write data from circular stream to file
     #------------------------------------------------------------------------------------
     def write_video(self):
-        self.logger.debug('@@@@@@@@@ Writing circular video buffer to file...')
+        self.logger.debug('Writing circular video buffer to file...')
         filepath = os.path.join(self.ENVIRON["topdir"], 'static/motionImages', datetime.now().strftime("%Y%m%d%H%M%S") + '.h264') 
 
         with self.stream.lock:
@@ -175,7 +184,7 @@ class motionLoop(object):
             # Write the rest of the stream to disk
             with io.open(filepath, 'wb') as output:
                 output.write(self.stream.read())
-        self.logger.debug('@@@@@@@@@ File ' + filepath + ' created!')
+        self.logger.debug('File ' + filepath + ' created!')
         # Wipe the circular stream once we're done
         self.stream.seek(0)
         self.stream.truncate()
@@ -190,7 +199,7 @@ class motionLoop(object):
     def detectionEvent(self, camera, frame):
         self.logger.debug('Motion detected. Determining course of action... ')
         
-        # clear recognized faces if time to do so 
+        # clear recognized faces from environment if time to do so 
         if type(self.ENVIRON["recognizeClear"]) == datetime:
             if self.ENVIRON["recognizeClear"] < datetime.now():
                 self.ENVIRON["recognized"] = None

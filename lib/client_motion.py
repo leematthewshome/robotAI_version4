@@ -92,12 +92,17 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
         if ENVIRON["talking"]:
             logger.debug("We are already talking on this device, so ignoring motion for now")
         else:
+            # trigger recording of video if we are in secureMode 
             if ENVIRON["secureMode"] =="True":
-                body = '{"action": "getChat", "chatItem": "SECURITY-0"}'
-            elif ENVIRON["friendMode"]=="True":
+                #body = '{"action": "getChat", "chatItem": "SECURITY-0"}'
+                if ENVIRON["saveVideo"] is None:
+                    ENVIRON["saveVideo"] = datetime.datetime.now() + datetime.timedelta(seconds=ENVIRON["videoTime"])
+                    
+            # trigger chat path if we are in friendMode 
+            if ENVIRON["friendMode"]=="True":
                 body = '{"action": "getChat", "chatItem": "GREET1-0"}'
-            logger.debug("About to send this data: " +body+"  to "+reply_to)
-            sendToMQ(ENVIRON, QCONN, reply_to, body)
+                logger.debug("About to send this data: " +body+"  to "+reply_to)
+                sendToMQ(ENVIRON, QCONN, reply_to, body)
     else:
          logger.debug("0 person detected in image so not starting chat/warning")
 
