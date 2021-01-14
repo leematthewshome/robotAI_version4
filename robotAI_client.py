@@ -146,6 +146,19 @@ if __name__ == '__main__':
             logger.error('Failed to start voice sensor')
     
     
+
+    # ---------------------------------------------------------------------------------------
+    # kick off button sensor process based on enabled = TRUE
+    # ---------------------------------------------------------------------------------------
+    if config['CLIENT']['buttonSensor'] == "True":
+        logger.info("Starting button sensor")
+        try:
+            from lib import client_buttonSensor
+            m = Process(target=client_buttonSensor.doSensor, args=(ENVIRON, VOICE,))
+            m.start()
+        except:
+            logger.error('Failed to start button sensor')
+    
     
     # ---------------------------------------------------------------------------------------
     # Send connect message to Central channel and Start listening on our client channel 
