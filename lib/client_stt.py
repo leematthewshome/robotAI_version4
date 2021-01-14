@@ -17,9 +17,12 @@ import os
 
 import base64
 import json
-from google.cloud import speech_v1 as speech
-from google.protobuf.json_format import MessageToJson
-
+try:
+    from google.cloud import speech_v1 as speech
+    from google.protobuf.json_format import MessageToJson
+except:
+    pass
+    
 # Toggle settings for respeaker or standard Mic
 #==============================================
 respeaker = True
@@ -124,15 +127,10 @@ class stt():
 
     def convertMono(self, stereo):
         monofile = os.path.join(ENVIRON["topdir"], 'static/audio/monofile.wav')
-        print('step 1')
         mono = wave.open(monofile, 'wb')
-        print('step 2')
         mono.setparams(stereo.getparams())
-        print('step 3')
         mono.setnchannels(1)
-        print('step 4')
         mono.writeframes(audioop.tomono(stereo.readframes(float('inf')), stereo.getsampwidth(), 1, 1))
-        print('step 5')
         mono.close()
         return monofile
 
