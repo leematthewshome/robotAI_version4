@@ -198,13 +198,12 @@ class motionLoop(object):
     #------------------------------------------------------------------------------------
     def detectionEvent(self, camera, frame):
         self.logger.debug('Motion detected. Determining course of action... ')
-        
-        # clear recognized faces from environment if time to do so 
-        if type(self.ENVIRON["recognizeClear"]) == datetime:
+
+        if isinstance(self.ENVIRON["recognizeClear"], datetime):
             if self.ENVIRON["recognizeClear"] < datetime.now():
                 self.ENVIRON["recognized"] = None
                 self.ENVIRON["recognizeClear"] = None
-                
+    
         # If we are already talking then no need to start speech again
         if self.ENVIRON["talking"]:
             self.logger.debug('Motion but talking...sending image to recognize faces')
@@ -219,7 +218,6 @@ class motionLoop(object):
             else:
                 diff = self.ENVIRON["motionTime"] - datetime.now()
                 self.logger.debug("Motion detected but taking no action. %s seconds delay remains" % str(diff.seconds))
-                pass
                 
 
         
