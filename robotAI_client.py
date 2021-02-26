@@ -56,7 +56,7 @@ def callback(ch, method, properties, body):
     elif app_id == 'motion':
         # call our set of actions related to motion
         import lib.client_motion as motion
-        motion.doLogic(ENVIRON, VOICE, connection, content, reply_to, body)
+        motion.doLogic(ENVIRON, VOICE, connection, logger, content, reply_to, body)
     elif app_id == 'voice':
         # call the set of actions related to voice
         VOICE.doLogic(content, body)
@@ -71,7 +71,8 @@ def callback(ch, method, properties, body):
 if __name__ == '__main__':
 
     # setup logging using the python logging library
-    logging.basicConfig()
+    #logging.basicConfig()
+    logging.basicConfig(format='%(asctime)s %(message)s', filename='/home/pi/robotAI4/runlog.log')
     logger = logging.getLogger("robotAI_client")
     if config['DEBUG']['debugClient']:
         logger.level = logging.DEBUG
@@ -96,7 +97,7 @@ if __name__ == '__main__':
     ENVIRON["talking"] = False			 
 
     # Create reference to our voice class
-    VOICE = client_voice.voice(ENVIRON)
+    VOICE = client_voice.voice(ENVIRON, logger)
 
     # define some variables
     isWWWeb = False
