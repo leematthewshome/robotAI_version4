@@ -30,15 +30,19 @@ except:
 #---------------------------------------------------------------------------------------------
 class voice():
 
-    def __init__(self, ENVIRON, language="en-US"):
+    def __init__(self, ENVIRON, logger, language="en-US"):
         debugOn = True
         
-        logging.basicConfig()
-        self.logger = logging.getLogger("voice")
-        if debugOn:
-            self.logger.level = logging.DEBUG
-        else:
-            self.logger.level = logging.INFO
+        # setup logging using the python logging library
+        #-----------------------------------------------------
+        #we may not need this - testing
+        #logging.basicConfig()
+        #self.logger = logging.getLogger("voice")
+        #if debugOn:
+        #    self.logger.level = logging.DEBUG
+        #else:
+        #    self.logger.level = logging.INFO
+        self.logger = logger
 
         self.ENVIRON = ENVIRON
         # set environ vars for chat
@@ -231,8 +235,11 @@ class voice():
     # ------------------------------------------------------
     def doLogic(self, content, body):
         if content == 'application/json':
+            #print(body)
             data = json.loads(body.decode("utf-8"))
+            self.logger.debug("Loaded data as json")
             action = data["action"]
+            print(action)
             if action == 'chat':
                 self.ENVIRON["talking"] = True
                 self.logger.info("I have now set self.ENVIRON['talking'] = " + str(self.ENVIRON["talking"]))

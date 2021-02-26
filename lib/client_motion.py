@@ -14,17 +14,19 @@ import datetime
 #---------------------------------------------------------------------------
 # Main function called by robotAI_client 
 #---------------------------------------------------------------------------
-def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
+def doLogic(ENVIRON, VOICE, QCONN, logger, content, reply_to, body):
     debugOn = True
     
     # setup logging using the python logging library
     #-----------------------------------------------------
-    logging.basicConfig()
-    logger = logging.getLogger("client_motion")
-    if debugOn:
-        logger.level = logging.DEBUG
-    else:
-        logger.level = logging.INFO
+    #we may not need this - testing
+    #logging.basicConfig()
+    #self.logger = logging.getLogger("motion")
+    #if debugOn:
+    #    self.logger.level = logging.DEBUG
+    #else:
+    #    self.logger.level = logging.INFO
+
      
     # load body text into dictionary
     logger.debug("Converting body to utf-8 text and json object")
@@ -69,14 +71,14 @@ def doLogic(ENVIRON, VOICE, QCONN, content, reply_to, body):
             #only interrupt if we detected a named face. Forget them after 60 seconds
             if len(faceStr) > 0:
                 ######################################################################################
-                # TODO need to interrupt chat but cannot while MQ reader waits for responses to finish 
+                # TODO need to interrupt chat but cannot while MsgQ reader waits for responses to finish 
                 ######################################################################################
                 # Reset delay for when next action taken in client_motionSensor 
                 ENVIRON["motionTime"] = datetime.datetime.now() + datetime.timedelta(seconds=ENVIRON["motionDelay"])
                 # Trigger chat with recognised person via message queue                
                 ENVIRON["recognized"] = faceStr
                 ENVIRON["recognizeClear"] = datetime.datetime.now() + datetime.timedelta(seconds=60)
-                body = '{"action": "getChat", "chatItem": "SYSTEM-1"}'
+                body = '{"action": "getChat", "chatItem": "RECOG-0"}'
                 logger.debug("About to send this data: " +body+"  to "+reply_to)
                 sendToMQ(ENVIRON, QCONN, reply_to, body)
                 return

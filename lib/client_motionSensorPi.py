@@ -37,7 +37,8 @@ lastUploaded = datetime.now()   # to store last time image sent
 class motionLoop(object):
 
     def __init__(self, ENVIRON):
-        logging.basicConfig()
+        #logging.basicConfig()
+        logging.basicConfig(format='%(asctime)s %(message)s', filename='/home/pi/robotAI4/motionSense.log')
         self.logger = logging.getLogger(__name__)
         self.logger.level = logging.DEBUG
         #self.logger.level = logging.INFO
@@ -118,10 +119,14 @@ class motionLoop(object):
                             
                             
                     # check to see if we need to save video due to motion
-                    if self.ENVIRON["saveVideo"]:
-                        if self.ENVIRON["saveVideo"] < datetime.now():
-                            self.write_video()
-                            self.ENVIRON["saveVideo"] = None
+                    try:
+                        #if self.ENVIRON["saveVideo"]:
+                        if self.ENVIRON["saveVideo"] is not None:
+                            if self.ENVIRON["saveVideo"] < datetime.now():
+                                self.write_video()
+                                self.ENVIRON["saveVideo"] = None
+                    except:
+                        self.logger.debug("An error occurred saving video")
             finally:
                 camera.stop_recording()            
             
@@ -188,10 +193,8 @@ class motionLoop(object):
         # Wipe the circular stream once we're done
         self.stream.seek(0)
         self.stream.truncate()
-        ###################################################################
-        # TODO add code to synch video files to the cloud and delete locally
-        ###################################################################
-                
+        #synch files to Box using rclone
+        os.system("rclone move '/home/pi/robotAI4/static/motionImages/' boxmeebo:rclone")
 
                 
     # Work out what we need to do when motion detected
