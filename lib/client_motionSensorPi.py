@@ -108,7 +108,7 @@ class motionLoop(object):
                     
                     # check to see if we need to stop detecting or submit image to brain
                     if (timestamp - lastUploaded).seconds >= uploadEvery:
-                        self.logger.debug("Checking for stop indicator and uploading image")
+                        #self.logger.debug("Checking for stop indicator and uploading image")
                         ts = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
                         cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)            
                         lastUploaded = timestamp
@@ -194,6 +194,7 @@ class motionLoop(object):
         self.stream.seek(0)
         self.stream.truncate()
         #synch files to Box using rclone
+        self.logger.debug('Synching files to cloud storage folder...')
         os.system("rclone move '/home/pi/robotAI4/static/motionImages/' boxmeebo:rclone")
 
                 
