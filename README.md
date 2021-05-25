@@ -3,6 +3,8 @@ This is the latest version of my AI / Automation platform. Designed this time to
 
 Installation for both Client & Brain Devices
 --------------------------------------------
+sudo apt install python3-pip
+
 sudo pip3 install imutils
 
 sudo pip3 install numpy
@@ -39,8 +41,6 @@ Download Snowboy project from Github, unzip, change directory to snowboy-master/
 
 Installation Specific to Server / Brain
 ---------------------------------------
-sudo pip3 install PyMySQL
-
 sudo pip3 install --upgrade tensorflow
 
 sudo pip3 install -U scikit-learn
