@@ -41,8 +41,21 @@ Download Snowboy project from Github, unzip, change directory to snowboy-master/
 
 Installation Specific to Server / Brain
 ---------------------------------------
+sudo apt update 
+
 sudo pip3 install --upgrade tensorflow
 
 sudo pip3 install -U scikit-learn
 
 sudo pip3 install flask
+
+
+Setup docker container for RabbitMQ
+--------------------------------------
+sudo apt install docker.io
+
+systemctl start docker
+
+systemctl enable docker
+
+
