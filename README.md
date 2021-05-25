@@ -50,12 +50,19 @@ sudo pip3 install -U scikit-learn
 sudo pip3 install flask
 
 
-Setup docker container for RabbitMQ
---------------------------------------
+Setup RabbitMQ via docker on Server / Brain
+-------------------------------------------
 sudo apt install docker.io
 
 systemctl start docker
 
 systemctl enable docker
 
+verify docker status with the following command: systemctl status docker
+
+sudo groupadd docker
+
+sudo usermod -aG docker $USER
+
+Before we download and run the RabbitMQ docker container we will need to assign it a separate IP that will not be used by other computers on the network...
 
