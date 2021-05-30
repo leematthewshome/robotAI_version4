@@ -73,7 +73,6 @@ install ifconfig with the following command: sudo apt install -y net-tools
 run the following command: config
 
 look for the line where it lists your current network IP, for example:
-
     wlo1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
     inet 192.168.1.105  netmask 255.255.255.0  broadcast 192.168.1.255"
 
