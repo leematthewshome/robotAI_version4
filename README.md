@@ -52,6 +52,8 @@ sudo pip3 install flask
 
 Setup RabbitMQ via docker on Server / Brain
 -------------------------------------------
+this install is covered in video here: https://www.youtube.com/watch?v=Iwi7KrAoKFg
+
 sudo apt install docker.io
 
 systemctl start docker
@@ -65,4 +67,14 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 
 Before we download and run the RabbitMQ docker container we will need to assign it a separate IP that will not be used by other computers on the network...
+
+install ifconfig with the following command: sudo apt install -y net-tools
+
+run the following command: config
+
+look for the line where it lists your current network IP, for example:
+
+    wlo1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+    inet 192.168.1.105  netmask 255.255.255.0  broadcast 192.168.1.255"
+
 
