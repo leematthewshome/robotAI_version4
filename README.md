@@ -73,7 +73,20 @@ install ifconfig with the following command: sudo apt install -y net-tools
 run the following command: config
 
 look for the line where it lists your current network IP, for example:
+
     wlo1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
     inet 192.168.1.105  netmask 255.255.255.0  broadcast 192.168.1.255"
+    
+as you can see from the above example my wireless network card is identified as "wlo1"
+
+so that we can map a separate external IP to the message queue we need to assign an extra IP to our network card. Choose one that will not be assigned to another device on your network.For example:
+
+sudo ip addr add 192.168.1.200 dev wlo1
+
+now install the rabbitmq docker container and run it
+
+docker run -d -p 192.168.1.200:8080:15672 -p 192.168.1.200:5672:5672 --name robotai-queue rabbitmq:3-management
+
+
 
 
