@@ -53,6 +53,24 @@ class detectorAPI:
         self.face_conf_cutoff = 0.5
 
 
+    # Send details to the message queue
+    # ----------------------------------------------------------------------------------
+    def sendMessage(self, reply_to, body):
+        try:
+            credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
+            parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
+            connection = pika.BlockingConnection(parameters)
+            channel1 = connection.channel()
+            channel1.queue_declare(reply_to)
+            properties = pika.BasicProperties(app_id='motion', content_type='application/json', reply_to=self.ENVIRON["brainQueue"])
+            channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
+            connection.close()
+        except:
+            self.logger.error('There was an error sending the message to the queue')
+            return False
+        return True
+
+
     # function to detect objects. Returns a dictionary of objects by count
     #-----------------------------------------------------------------------
     def objectCount(self, imgbin):
@@ -162,9 +180,12 @@ class detectorAPI:
             # respond to the client device that submitted the message
             body = json.dumps(detected)
             self.logger.debug('Sending data to: ' + reply_to + '. body = ' + body)
+            
+            result = self.sendMessage(reply_to, body)
+            """
             channel1 = msgQueue.channel()
             channel1.queue_declare(reply_to)
             properties = pika.BasicProperties(app_id='motion', content_type='application/json', reply_to='Central')
             channel1.basic_publish(exchange='', routing_key=reply_to, body=body, properties=properties)
-
+            """
 
