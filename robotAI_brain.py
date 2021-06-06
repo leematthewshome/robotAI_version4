@@ -56,10 +56,10 @@ def callback(ch, method, properties, body):
     elif app_id == 'camera':
         # For camera events just overwrite the latest image
         imgbin = base64.b64decode(body)
-        filePath = os.path.join(topdir, 'static/web', reply_to + '.jpg') 
+        filePath = os.path.join(topdir, 'static/motionImages', reply_to + '.jpg') 
         with open(filePath, 'wb') as f_output:
             f_output.write(imgbin)
-        #logger.debug("Saved image to " + filePath )
+        logger.debug("Saved image to " + filePath )
     elif app_id == 'motion':
         # For motion detection events check the image for any humans
         detectorAPI.doLogic(connection, content, reply_to, body)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     #-----------------------------------------------------
     logging.basicConfig()
     logger = logging.getLogger("robotAI_brain")
-    if config['QUEUE']['brainQueue']:
+    if config['DEBUG']['debugBrain'] == 'True':
         logger.level = logging.DEBUG
     else:
         logger.level = logging.INFO
