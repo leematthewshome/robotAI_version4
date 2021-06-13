@@ -15,6 +15,8 @@ sudo apt update
 
 sudo apt install libopencv-dev python3-opencv
 
+Download and unzip the code from this site. Rename the folder to robotAI4
+
 
 Installation Specific to Client
 --------------------------------
@@ -86,5 +88,20 @@ now install the rabbitmq docker container and run it
 docker run -d -p 192.168.1.200:8080:15672 -p 192.168.1.200:5672:5672 --name robotai-queue rabbitmq:3-management
 
 
+Finally...
+----------------------------------------------
+Update the settings.ini to reflect the chosen IP address and login credentials (guest:guest is default) for rabbitmq 
+
+Ensure the message queue is running on your chosen IP address
+
+Start the Brain code with the following command
+
+    python3 robotAI_brain.py
+    
+Start the Client code on a separate device (or in separate script window) with the following command
+
+    python3 robotAI_client.py
+
+You should see the details of the client connecting to the brain via the message queue in the comments in each script window
 
 
