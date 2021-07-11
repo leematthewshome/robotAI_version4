@@ -51,7 +51,7 @@ sudo pip3 install -U scikit-learn
 
 sudo pip3 install flask
 
-Download the Open Face model file (openface_nn4.small2.v1.t7) from {link to be supplied} and paste to folder ./robotAI4/static/MLModels/faceid/  (this file was too large to store on Github)
+Download the Open Face model file (openface_nn4.small2.v1.t7) from https://app.box.com/s/nqbp9my2li4hrjugft29z6eaofgecqpr and paste to folder ./robotAI4/static/MLModels/faceid/  (this file was too large to store on Github)
 
 
 Setup RabbitMQ via docker on Server / Brain
