@@ -1,13 +1,17 @@
 Image capture & Human Recognition
 ---------------------------------
 
-- Every few seconds (determined by uploadEvery which defaults as 3) an image is sent to the brain. This image is stored in static/motionImages and shown in the web page
+- Every few seconds (determined by uploadEvery which defaults as 3) an image is sent to the brain. 
+  This image is stored in static/motionImages and shown in the web page
 
 - If motion is recognised then an image is sent to the brain for object recognition. This image is stored in static/motionImages/[client_device_name]. 
-  Currently this cannot be turned on/off
+  NOTE - Currently this cannot be turned on/off
 
-- If a face is recognised in the image then a chat will be triggered, and the faces list will be written to ENVIRON variable, and timer set to when the faces will be cleared from ENVIRON
-  Currently this cannot be turned on/off
+- If a face is recognised in the image then the following will occur 
+    Chat will be triggered
+    The faces list will be written to ENVIRON variable
+    Timer set to when the faces will be cleared from ENVIRON
+  NOTE - Currently this cannot be turned on/off
   
 - If a person is detected (recognized or not) then actions will be taken depending on settings:
     If ENVIRON["motionTime"] has expired then ENVIRON["motionTime"] will be extended by ENVIRON["motionDelay"]
