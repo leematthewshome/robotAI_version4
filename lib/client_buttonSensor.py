@@ -45,11 +45,24 @@ class listenLoop(object):
         while True:
             i=GPIO.input(pin)
             if i==0:
-                print("Pin is LOW")
-                self.VOICE.say("You pressed the button")
+                #print("Pin is LOW")
+                #Send message to the brain to trigger bell ringing
+                properties = pika.BasicProperties(app_id='button', content_type='application/json', reply_to=self.ENVIRON["clientName"])
+                body = '{"action": "doorbell"}'
+                try:
+                    connection = pika.BlockingConnection(self.parameters)
+                    channel = connection.channel()
+                    channel.basic_publish(exchange='', routing_key='Central', body=body, properties=properties)
+                    connection.close()
+                except:
+                    self.logger.error('Unable to send doorbell alert to Message Queue ' + self.ENVIRON["queueSrvr"])
+                
+                #Let the person know what we are doing
+                self.VOICE.say("Hi, my name is Meebo. I will let my masters know you are here.")
                 time.sleep(1)
             else:
-                print("Pin is HIGH")
+                #print("Pin is HIGH")
+                pass
             time.sleep(.1)
     
         
