@@ -91,6 +91,8 @@ if __name__ == '__main__':
     ENVIRON["motion"] = config['CLIENT']['motionSensor']                # flags whether to run motion sensor
     ENVIRON["listen"] = True                                            # indicates pyaudio is free for hotword detection
     ENVIRON["topdir"] = topdir
+    ENVIRON["buttonAudio"] = config['CLIENT']['buttonAudio']              # the audio file triggered on brain when button pressed
+    ENVIRON["buttonVoice"] = config['CLIENT']['buttonVoice']              # the words spoken on brain when button is pressed
     # these defaults will be updated from central on connect
     ENVIRON["secureMode"] = config['CLIENT']['secureMode']
     ENVIRON["friendMode"] = config['CLIENT']['friendMode']
