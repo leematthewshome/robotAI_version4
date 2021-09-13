@@ -49,7 +49,7 @@ class listenLoop(object):
                 #Send message to the brain to trigger bell ringing
                 properties = pika.BasicProperties(app_id='button', content_type='application/json', reply_to=self.ENVIRON["clientName"])
                 try:
-                    body = '{"audio": "' + ENVIRON["buttonAudio"] + '", "voice": "' + ENVIRON["buttonVoice"] + '"}'
+                    body = '{"audio": "' + self.ENVIRON["buttonAudio"] + '", "voice": "' + self.ENVIRON["buttonVoice"] + '"}'
                     connection = pika.BlockingConnection(self.parameters)
                     channel = connection.channel()
                     channel.basic_publish(exchange='', routing_key='Central', body=body, properties=properties)
