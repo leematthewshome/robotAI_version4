@@ -48,14 +48,14 @@ class listenLoop(object):
                 #print("Pin is LOW")
                 #Send message to the brain to trigger bell ringing
                 properties = pika.BasicProperties(app_id='button', content_type='application/json', reply_to=self.ENVIRON["clientName"])
-                body = '{"action": "doorbell"}'
                 try:
+                    body = '{"audio": "' + ENVIRON["buttonAudio"] + '", "voice": "' + ENVIRON["buttonVoice"] + '"}'
                     connection = pika.BlockingConnection(self.parameters)
                     channel = connection.channel()
                     channel.basic_publish(exchange='', routing_key='Central', body=body, properties=properties)
                     connection.close()
                 except:
-                    self.logger.error('Unable to send doorbell alert to Message Queue ' + self.ENVIRON["queueSrvr"])
+                    self.logger.error('An error occurred trying to send doorbell alert to Message Queue ' + self.ENVIRON["queueSrvr"])
                 
                 #Let the person know what we are doing
                 self.VOICE.say("Hi, my name is Meebo. I will let my masters know you are here.")
@@ -72,4 +72,5 @@ class listenLoop(object):
 def doSensor(ENVIRON, VOICE):
     loop = listenLoop(ENVIRON, VOICE)
     loop.buttonListen()
+
 
