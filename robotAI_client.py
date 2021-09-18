@@ -70,21 +70,8 @@ def callback(ch, method, properties, body):
 #---------------------------------------------------------
 if __name__ == '__main__':
 
-    # setup logging using the python logging library
-    if config['CLIENT']['logMode'] == 'file':
-        logFile = os.path.join(topdir, 'runlog.log')
-        try:
-            os.remove(logFile)
-        except:
-            pass
-        logging.basicConfig(format='%(asctime)s %(message)s', filename=logFile)
-    else:
-        logging.basicConfig()
-    logger = logging.getLogger("robotAI_client")
-    if config['DEBUG']['debugClient']:
-        logger.level = logging.DEBUG
-    else:
-        logger.level = logging.INFO
+    # setup logging using the common_utils function
+    utils.setupLogging(topdir, 'robotAI_client')
 
     # Setup Environment data to be shared with Sensors
     #------------------------------------------------------
