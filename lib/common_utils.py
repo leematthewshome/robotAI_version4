@@ -46,7 +46,7 @@ def setupLogging(topdir, caller):
         logger.level = logging.DEBUG
     else:
         logger.level = logging.INFO
-
+    return logger
 
     
 # Function to check if we can access the internet
