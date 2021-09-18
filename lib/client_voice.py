@@ -32,7 +32,7 @@ import lib.common_utils as utils
 #---------------------------------------------------------------------------------------------
 class voice():
 
-    def __init__(self, ENVIRON, logger, language="en-US"):
+    def __init__(self, ENVIRON, language="en-US"):
         topdir = ENVIRON["topdir"]
         self.ENVIRON = ENVIRON
         
