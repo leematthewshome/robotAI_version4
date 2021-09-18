@@ -71,7 +71,7 @@ def callback(ch, method, properties, body):
 if __name__ == '__main__':
 
     # setup logging using the common_utils function
-    utils.setupLogging(topdir, 'robotAI_client')
+    logger = utils.setupLogging(topdir, 'robotAI_client')
 
     # Setup Environment data to be shared with Sensors
     #------------------------------------------------------
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     ENVIRON["talking"] = False			 
 
     # Create reference to our voice class
-    VOICE = client_voice.voice(ENVIRON, logger)
+    VOICE = client_voice.voice(ENVIRON)
 
     # define some variables
     isWWWeb = False
