@@ -23,6 +23,8 @@ try:
 except:
     import client_stt
 
+# import shared utility finctions
+import lib.common_utils as utils
 
 
 #---------------------------------------------------------------------------------------------
@@ -31,27 +33,16 @@ except:
 class voice():
 
     def __init__(self, ENVIRON, logger, language="en-US"):
-        debugOn = True
-        
-        # setup logging using the python logging library
-        #-----------------------------------------------------
-        #we may not need this - testing
-        #logging.basicConfig()
-        #self.logger = logging.getLogger("voice")
-        #if debugOn:
-        #    self.logger.level = logging.DEBUG
-        #else:
-        #    self.logger.level = logging.INFO
-        self.logger = logger
-
+        topdir = ENVIRON["topdir"]
         self.ENVIRON = ENVIRON
+        
+        # setup logging using the common_utils function
+        self.logger = utils.setupLogging(topdir, 'client_voice')
+
         # set environ vars for chat
         self.ENVIRON["stopChat"] = False
-        
         self.language = language
         self.stt = client_stt.stt(ENVIRON)
-        
-        topdir = ENVIRON["topdir"]
         self.beep_hi = os.path.join(topdir, "static/audio/beep_hi.wav")
         self.beep_lo = os.path.join(topdir, "static/audio/beep_lo.wav")
 
