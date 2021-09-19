@@ -25,7 +25,7 @@ class motionLoop(object):
         self.ENVIRON = ENVIRON
 
         # setup logging using the common_utils function
-        self.logger = utils.setupLogging(topdir, 'client_motionSensor')
+        self.logger = utils.setupLogging(topdir, __name__)
 
         credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
         self.parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
