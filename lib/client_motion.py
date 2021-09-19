@@ -17,17 +17,6 @@ import datetime
 def doLogic(ENVIRON, VOICE, QCONN, logger, content, reply_to, body):
     debugOn = True
     
-    # setup logging using the python logging library
-    #-----------------------------------------------------
-    #we may not need this - testing
-    #logging.basicConfig()
-    #self.logger = logging.getLogger("motion")
-    #if debugOn:
-    #    self.logger.level = logging.DEBUG
-    #else:
-    #    self.logger.level = logging.INFO
-
-     
     # load body text into dictionary
     logger.debug("Converting body to utf-8 text and json object")
     try:
