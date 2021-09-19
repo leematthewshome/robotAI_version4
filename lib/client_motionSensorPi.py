@@ -21,6 +21,9 @@ import io
 import picamera
 from picamera.array import PiRGBArray
 
+# import shared utility finctions
+import lib.common_utils as utils
+
 #settings for image capture and motion detecton
 resolution = [640, 480]
 minArea = 5000
@@ -37,11 +40,11 @@ lastUploaded = datetime.now()   # to store last time image sent
 class motionLoop(object):
 
     def __init__(self, ENVIRON):
-        #logging.basicConfig()
-        logging.basicConfig(format='%(asctime)s %(message)s', filename='/home/pi/robotAI4/motionSense.log')
-        self.logger = logging.getLogger(__name__)
-        self.logger.level = logging.DEBUG
-        #self.logger.level = logging.INFO
+        topdir = ENVIRON["topdir"]
+        self.ENVIRON = ENVIRON
+        
+        # setup logging using the common_utils function
+        self.logger = utils.setupLogging(topdir, __name__)
         
         # setup variables for motion detection process
         #-------------------------------------------------
@@ -56,8 +59,7 @@ class motionLoop(object):
         ENVIRON["recognizeClear"] = None
         ENVIRON["saveVideo"] = None
         ENVIRON["videoTime"] = recordTime
-
-        self.ENVIRON = ENVIRON
+        
         credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
         self.parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
 
