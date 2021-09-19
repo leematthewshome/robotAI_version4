@@ -37,7 +37,7 @@ class voice():
         self.ENVIRON = ENVIRON
         
         # setup logging using the common_utils function
-        self.logger = utils.setupLogging(topdir, 'client_voice')
+        self.logger = utils.setupLogging(topdir, __name__)
 
         # set environ vars for chat
         self.ENVIRON["stopChat"] = False
