@@ -12,6 +12,9 @@ import pika
 import RPi.GPIO as GPIO
 import time
 
+# import shared utility finctions
+import lib.common_utils as utils
+
 GPIO.setmode(GPIO.BCM)
 
 pin = 12
@@ -24,18 +27,15 @@ GPIO.setup(pin, GPIO.IN)
 class listenLoop(object):
 
     def __init__(self, ENVIRON, VOICE):
-        debug = True
+        topdir = ENVIRON["topdir"]
         self.ENVIRON = ENVIRON
+        
+        # setup logging using the common_utils function
+        self.logger = utils.setupLogging(topdir, __name__)
+
         self.VOICE = VOICE
         self.TOPDIR = ENVIRON["topdir"]
 
-        #Set debug level based on details in config DB
-        self.logger = logging.getLogger(__name__)
-        if debug:
-            self.logger.level = logging.DEBUG
-        else:
-            self.logger.level = logging.INFO
-        
         # Setup details to access the message queue
         credentials = pika.PlainCredentials(ENVIRON["queueUser"], ENVIRON["queuePass"])
         self.parameters = pika.ConnectionParameters(ENVIRON["queueSrvr"], ENVIRON["queuePort"], '/',  credentials)
