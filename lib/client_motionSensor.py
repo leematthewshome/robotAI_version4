@@ -15,15 +15,18 @@ import logging
 import base64
 import os
 
+# import shared utility finctions
+import lib.common_utils as utils
 
 class motionLoop(object):
 
     def __init__(self, ENVIRON):
-        logging.basicConfig()
-        self.logger = logging.getLogger(__name__)
-        #self.logger.level = logging.DEBUG
-        self.logger.level = logging.INFO
+        topdir = ENVIRON["topdir"]
         self.ENVIRON = ENVIRON
+
+        # setup logging using the common_utils function
+        self.logger = utils.setupLogging(topdir, 'client_motionSensor')
+
         credentials = pika.PlainCredentials(self.ENVIRON["queueUser"], self.ENVIRON["queuePass"])
         self.parameters = pika.ConnectionParameters(self.ENVIRON["queueSrvr"], self.ENVIRON["queuePort"], '/',  credentials)
 
