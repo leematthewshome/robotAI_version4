@@ -68,3 +68,15 @@ def testInternet(logger, tries, server="www.google.com"):
             return True
 
 
+
+import tempfile
+import subprocess 
+
+# Function to play a WAV file using aplay 
+def play(filename):
+    cmd = ['aplay', str(filename)]
+    with tempfile.TemporaryFile() as f:
+        subprocess.call(cmd, stdout=f, stderr=f)
+        f.seek(0)
+        output = f.read()
+
