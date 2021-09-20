@@ -59,14 +59,15 @@ def callback(ch, method, properties, body):
         filePath = os.path.join(topdir, 'static/motionImages', reply_to + '.jpg') 
         with open(filePath, 'wb') as f_output:
             f_output.write(imgbin)
-        logger.debug("Saved image to " + filePath )
+        #logger.debug("Saved image to " + filePath )
     elif app_id == 'motion':
         # For motion detection events check the image for any humans
         detectorAPI.doLogic(connection, content, reply_to, body)
     elif app_id == 'voice':
         # For voice events we need to determine intent of the speech and reply accordingly
-        #import lib.brain_voice as voice
         voiceAPI.doLogic(content, reply_to, body)
+    elif app_id == 'button':
+        button.doLogic(content, body, logger, ENVIRON)
     else:
         logger.error("Message received from "+reply_to+" but no logic exists for "+app_id)    
 
@@ -104,6 +105,7 @@ if __name__ == '__main__':
     detectorAPI = motion.detectorAPI(ENVIRON)
     import lib.brain_voice as voice
     voiceAPI = voice.voiceAPI(ENVIRON)
+    import lib.brain_button as button
 
     # define some variables
     isWWWeb = False		
