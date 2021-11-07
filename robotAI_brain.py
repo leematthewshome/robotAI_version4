@@ -97,6 +97,7 @@ if __name__ == '__main__':
     ENVIRON["queueUser"] = config['QUEUE']['queueUser']
     ENVIRON["queuePass"] = config['QUEUE']['queuePass']
     ENVIRON["brainQueue"] = config['QUEUE']['brainQueue']
+    ENVIRON["keepImages"] = config['BRAIN']['keepMotionImages']
 
     #instatiate code libraries to save time 
     #-----------------------------------------------------
