@@ -157,14 +157,15 @@ class detectorAPI:
                 f_output.write(imgbin)
 		
             # Store image in history folder for client
-            # ----------------------------------------       
-            folder = os.path.join(self.ENVIRON['topdir'], 'static/motionImages/', reply_to) 
-            if not os.path.exists(folder):
-                os.makedirs(folder)
-            filePath = os.path.join(folder, datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg') 
-            with open(filePath, 'wb') as f_output:
-                f_output.write(imgbin)
-            self.logger.debug("Saved image to " + filePath )
+            # ----------------------------------------     
+            if self.ENVIRON["keepImages"] == "True":
+                folder = os.path.join(self.ENVIRON['topdir'], 'static/motionImages/', reply_to) 
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                filePath = os.path.join(folder, datetime.now().strftime("%Y%m%d%H%M%S") + '.jpg') 
+                with open(filePath, 'wb') as f_output:
+                    f_output.write(imgbin)
+                self.logger.debug("Saved image to " + filePath )
 
             # use ML to detect objects in the image
             # -----------------------------------------------------------------
